@@ -1259,7 +1259,8 @@ export const defaultQuizzes = {
     "c": 0,
     "t": 0
     }
-  ]
+  }]
 };
+
 
 
