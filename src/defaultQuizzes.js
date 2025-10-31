@@ -2890,7 +2890,7 @@ export const defaultQuizzes = {
       },
       "tags": []
     }
-  }]
+  ]
 };
 
 
