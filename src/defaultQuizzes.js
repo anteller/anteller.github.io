@@ -1275,7 +1275,6 @@ export const defaultQuizzes = {
         "c": 0,
         "t": 0
       },
-      "tags": []
     },
     {
       "q": "おはします",
@@ -1291,7 +1290,6 @@ export const defaultQuizzes = {
         "c": 0,
         "t": 0
       },
-      "tags": []
     },
     {
       "q": "います",
@@ -1307,7 +1305,6 @@ export const defaultQuizzes = {
         "c": 0,
         "t": 0
       },
-      "tags": []
     },
     {
       "q": "ます",
@@ -1323,7 +1320,6 @@ export const defaultQuizzes = {
         "c": 0,
         "t": 0
       },
-      "tags": []
     },
     {
       "q": "まします",
@@ -2895,3 +2891,4 @@ export const defaultQuizzes = {
     }
   ]
 };
+
