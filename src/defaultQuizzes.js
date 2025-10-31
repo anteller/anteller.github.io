@@ -1335,9 +1335,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "いでます",
       "choices": [
@@ -1351,9 +1349,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "侍り",
       "choices": [
@@ -1367,9 +1363,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "候ふ",
       "choices": [
@@ -1383,9 +1377,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "つかうまつる",
       "choices": [
@@ -1399,9 +1391,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "つかまつる",
       "choices": [
@@ -1415,9 +1405,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "聞こす",
       "choices": [
@@ -1431,9 +1419,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "聞こしめす",
       "choices": [
@@ -1447,9 +1433,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "承る",
       "choices": [
@@ -1463,9 +1447,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "のたまふ",
       "choices": [
@@ -1479,9 +1461,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "のたまはす",
       "choices": [
@@ -1495,9 +1475,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "仰す",
       "choices": [
@@ -1511,9 +1489,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "奏す",
       "choices": [
@@ -1527,9 +1503,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "啓す",
       "choices": [
@@ -1543,9 +1517,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "聞こえさす",
       "choices": [
@@ -1559,9 +1531,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "申す",
       "choices": [
@@ -1575,9 +1545,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "聞こゆ",
       "choices": [
@@ -1591,9 +1559,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "ごらんず",
       "choices": [
@@ -1607,9 +1573,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "みそなはす",
       "choices": [
@@ -1623,9 +1587,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "おぼす",
       "choices": [
@@ -1639,9 +1601,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "おぼしめす",
       "choices": [
@@ -1655,9 +1615,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "おもほす",
       "choices": [
@@ -1671,9 +1629,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "おもほしめす",
       "choices": [
@@ -1687,9 +1643,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "存ず",
       "choices": [
@@ -1703,9 +1657,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "おはしめす",
       "choices": [
@@ -1719,9 +1671,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "参る（与ふ）",
       "choices": [
@@ -1735,9 +1685,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "まうづ",
       "choices": [
@@ -1751,9 +1699,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "まかづ（来・行く）",
       "choices": [
@@ -1767,9 +1713,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "まかる（来・行く）",
       "choices": [
@@ -1783,9 +1727,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "まかづ（出づ）",
       "choices": [
@@ -1799,9 +1741,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "まかる（出づ）",
       "choices": [
@@ -1815,9 +1755,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "給ふ（与ふ 四段）",
       "choices": [
@@ -1831,9 +1769,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "給はす",
       "choices": [
@@ -1847,9 +1783,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "給ぶ",
       "choices": [
@@ -1863,9 +1797,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "くださる",
       "choices": [
@@ -1879,9 +1811,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "参らす（与ふ）",
       "choices": [
@@ -1895,9 +1825,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "奉る（与ふ）",
       "choices": [
@@ -1911,9 +1839,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "まつる",
       "choices": [
@@ -1927,9 +1853,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "給はる",
       "choices": [
@@ -1943,9 +1867,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "給ふ（受く 下二段）",
       "choices": [
@@ -1959,9 +1881,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "召す（着る）",
       "choices": [
@@ -1975,9 +1895,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "奉る（着る）",
       "choices": [
@@ -1991,9 +1909,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "食す（着る）",
       "choices": [
@@ -2007,9 +1923,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "きこしめす",
       "choices": [
@@ -2023,9 +1937,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "召す（食ふ・飲む）",
       "choices": [
@@ -2039,9 +1951,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "参る（食ふ・飲む）",
       "choices": [
@@ -2055,9 +1965,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "奉る（食ふ・飲む）",
       "choices": [
@@ -2071,9 +1979,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "食す（食ふ・飲む）",
       "choices": [
@@ -2087,9 +1993,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "給ふ（食ふ・飲む 下二段）",
       "choices": [
@@ -2103,9 +2007,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "召す（乗る）",
       "choices": [
@@ -2119,9 +2021,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "奉る（乗る）",
       "choices": [
@@ -2135,9 +2035,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "殿",
       "choices": [
@@ -2151,9 +2049,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "上",
       "choices": [
@@ -2167,9 +2063,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "君",
       "choices": [
@@ -2183,9 +2077,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "御身",
       "choices": [
@@ -2199,9 +2091,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "宮",
       "choices": [
@@ -2215,9 +2105,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "行幸",
       "choices": [
@@ -2231,9 +2119,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "それがし",
       "choices": [
@@ -2247,9 +2133,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "なにがし",
       "choices": [
@@ -2263,9 +2147,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "御ー",
       "choices": [
@@ -2279,9 +2161,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "大ー",
       "choices": [
@@ -2295,9 +2175,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "高ー",
       "choices": [
@@ -2311,9 +2189,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "貴ー",
       "choices": [
@@ -2327,9 +2203,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "尊ー",
       "choices": [
@@ -2343,9 +2217,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "芳ー",
       "choices": [
@@ -2359,9 +2231,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "拙ー",
       "choices": [
@@ -2375,9 +2245,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "愚ー",
       "choices": [
@@ -2391,9 +2259,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "拝ー",
       "choices": [
@@ -2407,9 +2273,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "しやー",
       "choices": [
@@ -2423,9 +2287,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "ー君",
       "choices": [
@@ -2439,9 +2301,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "ー殿",
       "choices": [
@@ -2455,9 +2315,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "ー上",
       "choices": [
@@ -2471,9 +2329,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "ー達",
       "choices": [
@@ -2487,9 +2343,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "ーめ",
       "choices": [
@@ -2503,9 +2357,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "ーら",
       "choices": [
@@ -2519,9 +2371,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "ーども",
       "choices": [
@@ -2535,9 +2385,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "しろしめす（治む）",
       "choices": [
@@ -2551,9 +2399,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "しらしめす",
       "choices": [
@@ -2567,9 +2413,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "をす",
       "choices": [
@@ -2583,9 +2427,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "召す（呼ぶ）",
       "choices": [
@@ -2599,9 +2441,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "しろしめす（知る）",
       "choices": [
@@ -2615,9 +2455,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "大殿籠る",
       "choices": [
@@ -2631,9 +2469,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "あそばす",
       "choices": [
@@ -2647,9 +2483,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "参る（す）",
       "choices": [
@@ -2663,9 +2497,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "つかうまつる（す）",
       "choices": [
@@ -2679,9 +2511,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "おはす（補助）",
       "choices": [
@@ -2695,9 +2525,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "おはします（補助）",
       "choices": [
@@ -2711,9 +2539,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "います（補助）",
       "choices": [
@@ -2727,9 +2553,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "ます（補助）",
       "choices": [
@@ -2743,9 +2567,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "まします（補助）",
       "choices": [
@@ -2759,9 +2581,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "給ふ（補助 四段）",
       "choices": [
@@ -2775,9 +2595,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "聞こゆ（補助）",
       "choices": [
@@ -2791,8 +2609,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
+      }
     },
     {
       "q": "聞こえさす（補助）",
@@ -2807,9 +2624,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
-    },
+      }    },
     {
       "q": "参らす（補助）",
       "choices": [
@@ -2823,8 +2638,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
+      }
     },
     {
       "q": "つかうまつる（補助）",
@@ -2839,8 +2653,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
+      }
     },
     {
       "q": "申す（補助）",
@@ -2855,8 +2668,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
+      }
     },
     {
       "q": "奉る（補助）",
@@ -2871,8 +2683,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
+      }
     },
     {
       "q": "給ふ（補助 下二段）",
@@ -2887,12 +2698,7 @@ export const defaultQuizzes = {
       "stats": {
         "c": 0,
         "t": 0
-      },
-      "tags": []
+      }
     }
   ]
 };
-
-
-
-
