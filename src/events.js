@@ -51,7 +51,7 @@ function startQuizLowAcc(g,limit){
   }
 }
 function startQuizFlaggedOnly(g){
-  if(startQuizMode(g,{flaggedOnly:true})){
+  if(startQuizMode(g,{flaggedOnly:true})){ 
     showScreen("quizScreen");
     renderQuestion();
   }
@@ -86,6 +86,51 @@ export function bindEvents(){
     adjustPriorityFactor(1/m);
   });
 
+  // --- スワイプ操作: 回答後に右->左スワイプで次の問題へ進む ---
+  // スマホのタッチイベントを監視。縦スクロールと区別するため Y の移動量を制限。
+  (function setupTouchSwipe(){
+    try{
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touching = false;
+      const SWIPE_THRESHOLD = 40; // px 以上の横移動でスワイプと判定
+      const SWIPE_MAX_Y_DELTA = 80; // 縦移動がこれより大きければスワイプ扱いしない
+
+      function onTouchStart(e){
+        if(!e.touches || e.touches.length !== 1) return;
+        const t = e.touches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        touching = true;
+      }
+      function onTouchEnd(e){
+        if(!touching) return;
+        touching = false;
+        const t = (e.changedTouches && e.changedTouches[0]) || null;
+        if(!t) return;
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+        if(Math.abs(dy) > SWIPE_MAX_Y_DELTA) return; // 縦スクロールと判定
+        // 右から左へのスワイプ: dx が負で閾値より大きい
+        if(dx < -SWIPE_THRESHOLD){
+          // 回答済みのときのみ遷移させる (丸/バツ が表示された後)
+          if(state.answered){
+            // 手動モードでも自動モードでも nextQuestionManual を呼ぶのが安全
+            // (utils.keyListenerActiveQuiz と整合させるため)
+            nextQuestionManual();
+          }
+        }
+      }
+
+      // passive:true にしてスクロール性能に悪影響を与えない
+      els.quizScreen?.addEventListener('touchstart', onTouchStart, { passive: true });
+      els.quizScreen?.addEventListener('touchend', onTouchEnd, { passive: true });
+    }catch(err){
+      // 何か環境依存の例外が出てもアプリ動作を壊さない
+      console.error('setupTouchSwipe failed', err);
+    }
+  })();
+
   /* ==== 問題数選択画面（委譲） ==== */
   if(els.qCountButtons){
     els.qCountButtons.addEventListener("click", e=>{
@@ -96,7 +141,7 @@ export function bindEvents(){
       const count=btn.dataset.count;
       if(!genre || !mode) return;
       let limit=null;
-      if(count && count!=="all"){
+      if(count && count!="all"){
         const n=parseInt(count,10);
         if(!isNaN(n)&&n>0) limit=n;
       }
