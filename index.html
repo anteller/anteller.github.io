@@ -206,7 +206,6 @@
     <div class="manage-header">
       <div class="title" id="manageTitle">問題管理</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn small" id="manageAddBtn" type="button">＋ 新規追加</button>
         <button class="btn flat small" id="genreExportBtn" type="button">JSONエクスポート</button>
         <button class="btn flat small" id="genreImportBtn" type="button">JSONインポート</button>
         <input id="genreImportFile" type="file" accept=".json,application/json" class="hidden">
@@ -218,6 +217,10 @@
       <div>
         <label style="font-size:12px;">ジャンル</label>
         <select id="genreFilterSelect"></select>
+        <!-- 新規追加ボタンをジャンルの下に移動 -->
+        <div style="margin-top:8px;">
+          <button class="btn small" id="manageAddBtn" type="button">＋ 新規追加</button>
+        </div>
       </div>
       <div>
         <label style="font-size:12px;">検索（タグ / 問題文 / 選択肢）</label>
@@ -225,7 +228,7 @@
       </div>
       <div>
         <label style="font-size:12px;">要チェック</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;"> 
           <button class="btn small flat" id="flaggedFilterBtn" type="button" title="要チェック問題のみ表示を切替">
             ☆ 要チェックのみ
           </button>
