@@ -17,10 +17,7 @@
     <div id="genreButtons"></div>
     <div class="info-row" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px;">
       <button class="btn small" id="addGenreBtn" type="button">＋ ジャンル追加</button>
-      <!-- ホーム画面の「問題を追加」ボタンを削除 -->
       <button class="btn small flat" id="settingsBtn" type="button">設定</button>
-      <!-- 右クリック依存の管理ボタンはUIから廃止 -->
-      <!-- <button class="btn small flat" id="manageBtn" type="button" title="最後に選んだジャンルを管理">問題管理</button> -->
       <button class="btn small flat" id="genreManageBtn" type="button">ジャンル管理</button>
     </div>
     <p style="margin-top:12px;font-size:12px;color:var(--c-text-sub)">
@@ -77,8 +74,6 @@
       <button class="btn" id="retrySameBtn" type="button">同じ条件でもう一度</button>
       <button class="btn secondary" id="backToCountBtn" type="button">出題数を選び直す</button>
       <button class="btn flat" id="backToGenreBtn" type="button">ホーム画面へ</button>
-      <!-- 結果からの「問題管理」導線は廃止 -->
-      <!-- <button class="btn flat" id="manageFromResultBtn" type="button">問題管理</button> -->
     </div>
 
     <div id="retryBlock" class="hidden" style="margin-top:4px;">
@@ -186,7 +181,7 @@
         </label>
         <p style="font-size:12px;color:var(--c-text-sub);margin:4px 0 0;">
           「出題率↑」ボタンで weight をこの値倍します。<br>
-          「出題率↓」は逆数で割ります (最小0.2〜最大5.0にクランプ)。
+          「出題率↓」は逆数で割ります (最小0.2〜最大5.0にクラン��)。
         </p>
       </fieldset>
       <fieldset>
@@ -215,10 +210,10 @@
     </div>
     <div class="manage-controls">
       <div>
-        <label style="font-size:12px;">ジャンル</label>
+        <label class="genre-filter-label" style="font-size:12px;">ジャンル</label>
         <select id="genreFilterSelect"></select>
         <div style="margin-top:8px;">
-          <button class="btn small" id="manageAddBtn" type="button">＋ 問題追加</button>
+          <button class="btn small" id="manageAddBtn" type="button">＋ 新規追加</button>
         </div>
       </div>
       <div>
@@ -232,8 +227,8 @@
             ☆ 要チェックのみ
           </button>
         </div>
+        <div style="font-size:10px;color:var(--c-text-sub);">トグル表示</div>
       </div>
-      <!-- 「フィルタ適用」「クリア」ボタンを削除 -->
     </div>
     <div class="bulk-bar">
       <div class="left">
