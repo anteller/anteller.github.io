@@ -518,7 +518,7 @@ body[data-theme="dark"] .genre-menu-btn:hover {
 }
 /* モバイルで 管理画面の「ジャンル」選択（ラベル＋セレクト）を非表示にする */
 /* 端末幅が狭いときにだけ隠す。必要に応じて閾値(1500px)は調整してください。 */
-@media (max-width: 1500px){
+@media (max-width: 2000px){
   #manageScreen .manage-controls > div:first-child > label,
   #manageScreen .manage-controls > div:first-child > #genreFilterSelect{
     display: none !important;
