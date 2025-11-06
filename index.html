@@ -13,13 +13,14 @@
 
   <!-- ジャンル選択 -->
   <div id="genreSelect" class="panel" data-screen="genreSelect">
-    <p>ジャンルを選んでください（左クリック: プレイ / 右クリック: 管理）</p>
+    <p>ジャンルを選んでください</p>
     <div id="genreButtons"></div>
     <div class="info-row" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px;">
       <button class="btn small" id="addGenreBtn" type="button">＋ ジャンル追加</button>
-      <button class="btn small" id="addQuestionBtn" type="button">＋ 問題を追加</button>
+      <!-- ホーム画面の「問題を追加」ボタンを削除 -->
       <button class="btn small flat" id="settingsBtn" type="button">設定</button>
-      <button class="btn small flat" id="manageBtn" type="button" title="最後に選んだジャンルを管理">問題管理</button>
+      <!-- 右クリック依存の管理ボタンはUIから廃止 -->
+      <!-- <button class="btn small flat" id="manageBtn" type="button" title="最後に選んだジャンルを管理">問題管理</button> -->
       <button class="btn small flat" id="genreManageBtn" type="button">ジャンル管理</button>
     </div>
     <p style="margin-top:12px;font-size:12px;color:var(--c-text-sub)">
@@ -39,7 +40,6 @@
   </div>
 
   <!-- クイズ画面 -->
-
   <div id="quizScreen" class="panel hidden" data-screen="quizScreen">
     <div class="progress" id="progress"></div>
     <div style="text-align:right;max-width:780px;margin:0 auto;">
@@ -73,12 +73,12 @@
   <div id="resultScreen" class="panel hidden" data-screen="resultScreen">
     <h2>結果</h2>
     <p id="score" style="font-size:18px;font-weight:600;"></p>
-    <!-- ボタンを上部へ -->
     <div class="inline-actions" style="margin:10px 0 20px;">
       <button class="btn" id="retrySameBtn" type="button">同じ条件でもう一度</button>
       <button class="btn secondary" id="backToCountBtn" type="button">出題数を選び直す</button>
       <button class="btn flat" id="backToGenreBtn" type="button">ホーム画面へ</button>
-      <button class="btn flat" id="manageFromResultBtn" type="button">問題管理</button>
+      <!-- 結果からの「問題管理」導線は廃止 -->
+      <!-- <button class="btn flat" id="manageFromResultBtn" type="button">問題管理</button> -->
     </div>
 
     <div id="retryBlock" class="hidden" style="margin-top:4px;">

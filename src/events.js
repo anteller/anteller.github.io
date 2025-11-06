@@ -67,7 +67,7 @@ export function bindEvents(){
       onDontKnow: handleDontKnow
     });
   });
-  els.nextQuestionBtn.addEventListener("click", nextQuestionManual);
+  els.nextQuestionBtn?.addEventListener("click", nextQuestionManual);
 
   els.flagToggleBtn?.addEventListener("click", ()=>{
     const q = state.questions[state.currentIndex];
@@ -154,7 +154,7 @@ export function bindEvents(){
   }
 
   /* ==== ジャンル / トップ ==== */
-  els.addGenreBtn.addEventListener("click", ()=>{
+  els.addGenreBtn?.addEventListener("click", ()=>{
     const name=prompt("新しいジャンル名:");
     if(!name) return;
     const g=name.trim();
@@ -166,7 +166,8 @@ export function bindEvents(){
     showToast(`ジャンル「${g}」追加`);
   });
 
-  els.manageBtn.addEventListener("click", ()=>{
+  // ホームの「問題管理」ボタンはUIから削除済みなので、null安全に
+  els.manageBtn?.addEventListener("click", ()=>{
     if(!state.currentGenre){
       const first=state.genreOrder[0];
       if(!first){ showToast("ジャンルがありません"); return; }
@@ -178,26 +179,26 @@ export function bindEvents(){
   els.genreManageBtn?.addEventListener("click", ()=>showGenreManage());
 
   /* ==== 戻り/再挑戦 ==== */
-  els.qCountCancelBtn.addEventListener("click", ()=>showScreen("genreSelect"));
-  els.backBtn.addEventListener("click", ()=>{
+  els.qCountCancelBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
+  els.backBtn?.addEventListener("click", ()=>{
     if(confirm("進行中のクイズを終了しますか？")) showScreen("genreSelect");
   });
-  els.retryWrongBtn.addEventListener("click", retryWrongOnly);
-  els.backToGenreBtn.addEventListener("click", ()=>showScreen("genreSelect"));
-  els.retrySameBtn.addEventListener("click", ()=>{
+  els.retryWrongBtn?.addEventListener("click", retryWrongOnly);
+  els.backToGenreBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
+  els.retrySameBtn?.addEventListener("click", ()=>{
     const s=state.lastSession;
     if(!s||!s.genre){ showToast("直前の出題条件がありません"); return; }
     if(s.flaggedOnly)      startQuizFlaggedOnly(s.genre);
     else if(s.lowAccuracy) startQuizLowAcc(s.genre,s.limit);
     else                   startQuizNormal(s.genre,s.limit);
   });
-  els.backToCountBtn.addEventListener("click", ()=>{
+  els.backToCountBtn?.addEventListener("click", ()=>{
     if(!state.currentGenre) showScreen("genreSelect");
     else showQuestionCountScreen(state.currentGenre);
   });
 
   /* ==== 結果画面 フラグ ==== */
-  els.wrongList.addEventListener("click", e=>{
+  els.wrongList?.addEventListener("click", e=>{
     const btn=e.target.closest(".flag-btn");
     if(!btn) return;
     const id=btn.dataset.id;
@@ -213,7 +214,7 @@ export function bindEvents(){
     btn.classList.toggle("active",newState);
     btn.textContent=newState?"★ 要チェック":"☆ 要チェック";
   });
-  // 結果画面 -> 問題管理へ
+  // 結果画面 -> 問題管理へ（UI廃止済み。null安全にしておく）
   els.manageFromResultBtn?.addEventListener("click", ()=>{
     if(!state.currentGenre){
       showToast("現在のジャンルが特定できません");
@@ -332,6 +333,7 @@ export function bindEvents(){
   els.genreManageBackBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
 
   /* ==== 追加画面 ==== */
+  // ホームからの addQuestionBtn は削除済み。以下は管理画面などからの導線のみ有効。
   els.addQuestionBtn?.addEventListener("click", ()=>{
     const g = state.currentGenre || state.genreOrder[0] || "";
     showAddScreen(g);
@@ -360,19 +362,19 @@ export function bindEvents(){
   els.resetAllDataBtn?.addEventListener("click", ()=>resetAllData());
 
   /* ==== 設定画面 ==== */
-  els.settingsBtn.addEventListener("click", ()=>{
+  els.settingsBtn?.addEventListener("click", ()=>{
     populateSettingsForm();
     showScreen("settingsScreen");
   });
-  els.settingsForm.addEventListener("change", e=>{
+  els.settingsForm?.addEventListener("change", e=>{
     if(e.target.name==="progressMode") toggleAutoDelayVisibility();
   });
-  els.settingsForm.addEventListener("submit", e=>{
+  els.settingsForm?.addEventListener("submit", e=>{
     e.preventDefault();
     saveSettingsFromForm();
     showScreen("genreSelect");
   });
-  els.cancelSettingsBtn.addEventListener("click", ()=>showScreen("genreSelect"));
+  els.cancelSettingsBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
 }
 
 /* 外部公開（他で再利用する開始関数） */
