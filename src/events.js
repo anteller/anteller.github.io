@@ -87,14 +87,13 @@ export function bindEvents(){
   });
 
   // --- スワイプ操作: 回答後に右->左スワイプで次の問題へ進む ---
-  // スマホのタッチイベントを監視。縦スクロールと区別するため Y の移動量を制限。
   (function setupTouchSwipe(){
     try{
       let touchStartX = 0;
       let touchStartY = 0;
       let touching = false;
-      const SWIPE_THRESHOLD = 40; // px 以上の横移動でスワイプと判定
-      const SWIPE_MAX_Y_DELTA = 80; // 縦移動がこれより大きければスワイプ扱いしない
+      const SWIPE_THRESHOLD = 40;
+      const SWIPE_MAX_Y_DELTA = 80;
 
       function onTouchStart(e){
         if(!e.touches || e.touches.length !== 1) return;
@@ -110,23 +109,17 @@ export function bindEvents(){
         if(!t) return;
         const dx = t.clientX - touchStartX;
         const dy = t.clientY - touchStartY;
-        if(Math.abs(dy) > SWIPE_MAX_Y_DELTA) return; // 縦スクロールと判定
-        // 右から左へのスワイプ: dx が負で閾値より大きい
+        if(Math.abs(dy) > SWIPE_MAX_Y_DELTA) return;
         if(dx < -SWIPE_THRESHOLD){
-          // 回答済みのときのみ遷移させる (丸/バツ が表示された後)
           if(state.answered){
-            // 手動モードでも自動モードでも nextQuestionManual を呼ぶのが安全
-            // (utils.keyListenerActiveQuiz と整合させるため)
             nextQuestionManual();
           }
         }
       }
 
-      // passive:true にしてスクロール性能に悪影響を与えない
       els.quizScreen?.addEventListener('touchstart', onTouchStart, { passive: true });
       els.quizScreen?.addEventListener('touchend', onTouchEnd, { passive: true });
     }catch(err){
-      // 何か環境依存の例外が出てもアプリ動作を壊さない
       console.error('setupTouchSwipe failed', err);
     }
   })();
@@ -252,22 +245,16 @@ export function bindEvents(){
     rebuildManageList();
   });
 
-  els.applyFilterBtn?.addEventListener("click", ()=>{
+  // 検索は入力のたびに自動適用
+  els.tagFilterInput?.addEventListener("input", ()=>{
     state.tagFilter = els.tagFilterInput.value.trim();
     rebuildManageList();
   });
-  els.clearFilterBtn?.addEventListener("click", ()=>{
-    state.tagFilter="";
-    if(els.tagFilterInput) els.tagFilterInput.value="";
-    rebuildManageList();
-  });
-  els.tagFilterInput?.addEventListener("keydown", e=>{
-    if(e.key==="Enter"){
-      e.preventDefault();
-      state.tagFilter = els.tagFilterInput.value.trim();
-      rebuildManageList();
-    }
-  });
+
+  // 既存のフィルタボタン/Enterキー適用は廃止
+  // els.applyFilterBtn?.addEventListener("click", ...)
+  // els.clearFilterBtn?.addEventListener("click", ...)
+  // els.tagFilterInput?.addEventListener("keydown", ...)
 
   els.flaggedFilterBtn?.addEventListener("click", ()=>{
     state.manageFlaggedOnly=!state.manageFlaggedOnly;

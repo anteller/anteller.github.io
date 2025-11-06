@@ -36,7 +36,7 @@ export const els = {
   flagToggleBtn: $("#flagToggleBtn"),
   priorityAdjustWrap: $("#priorityAdjustWrap"),
   priorityUpBtn: $("#priorityUpBtn"),
-  priorityDownBtn: $("#priorityDownBtn"),
+  priorityDownBtn: "#priorityDownBtn" ? document.querySelector("#priorityDownBtn") : null,
   priorityIndicator: $("#priorityIndicator"),
   addForm: $("#addForm"),
   addEditTitle: $("#addEditTitle"),
@@ -64,8 +64,7 @@ export const els = {
   manageListWrap: $("#manageListWrap"),
   sortSelect: $("#sortSelect"),
   tagFilterInput: $("#tagFilterInput"),
-  applyFilterBtn: $("#applyFilterBtn"),
-  clearFilterBtn: $("#clearFilterBtn"),
+  // applyFilterBtn, clearFilterBtn は廃止
   selectAllBtn: $("#selectAllBtn"),
   deselectAllBtn: $("#deselectAllBtn"),
   bulkDeleteBtn: $("#bulkDeleteBtn"),
