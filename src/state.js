@@ -20,6 +20,8 @@ export const state = {
     selectedQuestionIds: new Set(),
     pendingGenreForCount: null,
     lastUndo: null,
-    lastSession:{genre:null,limit:null,lowAccuracy:false,flaggedOnly:false},
-    manageFlaggedOnly:false
+    lastSession:{genre:null,limit:null,lowAccuracy:false,flaggedOnly:false,mode:DEFAULT_SETTINGS.appMode},
+    manageFlaggedOnly:false,
+    // 追加: 現在のアプリ出題モード
+    appMode: DEFAULT_SETTINGS.appMode
 };
