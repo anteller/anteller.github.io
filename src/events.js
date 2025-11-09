@@ -36,6 +36,26 @@ import {
   toggleAutoDelayVisibility
 } from "./settingsUI.js";
 import { showScreen, showToast, keyListenerActiveQuiz } from "./utils.js";
+import { saveSettings } from "./storage.js"; // モード保存のために設定保存を呼ぶ
+
+/* モード切替補助 */
+function updateModeButtonsUI() {
+  if (!els.modeSingleBtn) return;
+  const mode = state.appMode || "single";
+  els.modeSingleBtn.classList.toggle("active", mode === "single");
+  els.modeMultipleBtn.classList.toggle("active", mode === "multiple");
+  els.modeFlashBtn.classList.toggle("active", mode === "flashcards");
+}
+
+function setAppMode(mode) {
+  if (!mode) return;
+  state.appMode = mode;
+  state.settings.appMode = mode;
+  saveSettings(state.settings); // storage.js の saveSettings を利用
+  updateModeButtonsUI();
+  showToast(`モードを「${mode}」に切り替えました`);
+  // 将来: registry.loadMode(mode) を呼んで UI/engine を差し替える処理を追加
+}
 
 /* クイズ開始用ラッパ */
 function startQuizNormal(g,limit){
@@ -58,6 +78,13 @@ function startQuizFlaggedOnly(g){
 }
 
 export function bindEvents(){
+  /* ==== モード切替ボタン ==== */
+  els.modeSingleBtn?.addEventListener("click", ()=>setAppMode("single"));
+  els.modeMultipleBtn?.addEventListener("click", ()=>setAppMode("multiple"));
+  els.modeFlashBtn?.addEventListener("click", ()=>setAppMode("flashcards"));
+  // 初期UI反映
+  updateModeButtonsUI();
+
   /* ==== 回答画面 ==== */
   els.iDontKnowBtn?.addEventListener("click", handleDontKnow);
   window.addEventListener("keydown", e=>{

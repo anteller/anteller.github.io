@@ -36,7 +36,7 @@ export const els = {
   flagToggleBtn: $("#flagToggleBtn"),
   priorityAdjustWrap: $("#priorityAdjustWrap"),
   priorityUpBtn: $("#priorityUpBtn"),
-  priorityDownBtn: "#priorityDownBtn" ? document.querySelector("#priorityDownBtn") : null,
+  priorityDownBtn: $("#priorityDownBtn"),
   priorityIndicator: $("#priorityIndicator"),
   addForm: $("#addForm"),
   addEditTitle: $("#addEditTitle"),
@@ -64,7 +64,12 @@ export const els = {
   manageListWrap: $("#manageListWrap"),
   sortSelect: $("#sortSelect"),
   tagFilterInput: $("#tagFilterInput"),
-  // applyFilterBtn, clearFilterBtn は廃止
+  // モード切替UI参照
+  modeToggle: $("#modeToggle"),
+  modeSingleBtn: $("#modeSingleBtn"),
+  modeMultipleBtn: $("#modeMultipleBtn"),
+  modeFlashBtn: $("#modeFlashBtn"),
+  // applyFilterBtn / clearFilterBtn は廃止
   selectAllBtn: $("#selectAllBtn"),
   deselectAllBtn: $("#deselectAllBtn"),
   bulkDeleteBtn: $("#bulkDeleteBtn"),

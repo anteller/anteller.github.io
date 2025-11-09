@@ -1,12 +1,17 @@
 import {
   STORAGE_KEY, SETTINGS_KEY, GENRE_ORDER_KEY,
-  DATA_VERSION, DEFAULT_SETTINGS
+  DATA_VERSION, DEFAULT_SETTINGS,
+  STORAGE_KEY_SINGLE, STORAGE_KEY_MULTIPLE, STORAGE_KEY_FLASH,
+  APP_MODES
 } from "./constants.js";
 import { state } from "./state.js";
 import { normalizeQuestion } from "./normalize.js";
 import { clone } from "./utils.js";
 import { defaultQuizzes } from "./defaultQuizzes.js";
 
+/**
+ * 既存の migrateQuizzes を保持（内部データ正規化）
+ */
 export function migrateQuizzes(data){
   if(!data.__version) data.__version=1;
   Object.keys(data).forEach(k=>{
@@ -17,25 +22,81 @@ export function migrateQuizzes(data){
   return data;
 }
 
-export function safeLoadQuizzes(){
+/* ---------- モード対応ヘルパ ---------- */
+
+/* モードに対応した localStorage キーを返す（既定: single） */
+function keyForMode(mode) {
+  const m = mode || (state.settings && state.settings.appMode) || APP_MODES.SINGLE;
+  switch (m) {
+    case APP_MODES.MULTIPLE: return STORAGE_KEY_MULTIPLE;
+    case APP_MODES.FLASHCARDS: return STORAGE_KEY_FLASH;
+    case APP_MODES.SINGLE:
+    default: return STORAGE_KEY_SINGLE;
+  }
+}
+
+/**
+ * safeLoadQuizzes(mode?)
+ * - 互換性: 引数を省略した呼び出しは既存コードと整合するように動作します。
+ * - mode を渡すとそのモード用キーから読み込みます。
+ */
+export function safeLoadQuizzes(mode){
   try{
-    const raw=localStorage.getItem(STORAGE_KEY);
-    if(!raw) return migrateQuizzes(clone(defaultQuizzes));
-    const parsed=JSON.parse(raw);
-    if(!parsed.__version || parsed.__version<DATA_VERSION) return migrateQuizzes(parsed);
+    const key = keyForMode(mode);
+    const raw = localStorage.getItem(key);
+
+    if(!raw){
+      // もし新しいキーにデータがなければ、既存の旧キー(STORAGE_KEY)をフォールバックで読む（初回移行を楽にする）
+      if(key !== STORAGE_KEY && localStorage.getItem(STORAGE_KEY)){
+        const legacyRaw = localStorage.getItem(STORAGE_KEY);
+        if(legacyRaw){
+          try{
+            const parsedLegacy = JSON.parse(legacyRaw);
+            const migrated = migrateQuizzes(parsedLegacy);
+            // コピーしておく（非破壊、旧キーは残す）
+            try{ localStorage.setItem(key, JSON.stringify(migrated)); }catch(e){}
+            return migrated;
+          }catch(e){
+            // ignore parse error
+          }
+        }
+      }
+      // デフォルトを返す（既存の挙動を維持）
+      return migrateQuizzes(clone(defaultQuizzes));
+    }
+
+    const parsed = JSON.parse(raw);
+    if(!parsed.__version || parsed.__version < DATA_VERSION) return migrateQuizzes(parsed);
     Object.keys(parsed).forEach(k=>{
       if(k.startsWith("__")) return;
-      parsed[k]=parsed[k].map(normalizeQuestion);
+      parsed[k] = parsed[k].map(normalizeQuestion);
     });
     return parsed;
-  }catch{
+  }catch(err){
+    console.error("safeLoadQuizzes error", err);
     return migrateQuizzes(clone(defaultQuizzes));
   }
 }
 
-export function saveQuizzes(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.quizzes)); }catch{}
+/**
+ * saveQuizzes([mode])
+ * - 既存コードは引数なしで呼んでいるため互換性のために保持。
+ * - 引数 mode を渡せばモード別キーへ保存できる。
+ * - 引数で quizzes オブジェクト自体を渡す方式は既存コードと衝突するため採用せず、state.quizzes を保存する形を維持。
+ */
+export function saveQuizzes(mode){
+  try{
+    const key = keyForMode(mode);
+    localStorage.setItem(key, JSON.stringify(state.quizzes));
+  }catch(err){
+    console.error("saveQuizzes failed", err);
+  }
 }
+
+/* 既存互換ラッパ（旧挙動を想定する呼び出し） */
+export function safeLoadQuizzesLegacy(){ return safeLoadQuizzes(APP_MODES.SINGLE); }
+
+/* ---------- 設定 / ジャンル順序（既存のまま） ---------- */
 
 export function loadSettings(){
   try{
@@ -91,6 +152,7 @@ export function saveGenreOrder(){
   try{ localStorage.setItem(GENRE_ORDER_KEY, JSON.stringify(state.genreOrder)); }catch{}
 }
 
+/* ---------- 既存のユーティリティ関数をそのまま保持 ---------- */
 export function normalizeQuestionCountOptions(raw){
   if(!raw) return ["5","10","all"];
   let arr=Array.isArray(raw)? raw : String(raw).split(",");
