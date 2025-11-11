@@ -21,6 +21,9 @@ import {
 import { normalizeQuestion } from "../../../normalize.js";
 import { recordUndo } from "../../../undo.js";
 import { defaultQuizzes } from "../../../defaultQuizzes.js";
+import multipleManage from "../../multiple/manage.js";
+import flashManage from "../../flashcards/manage.js";
+import { state } from "../../../state.js";
 
 /* ========== 内部ユーティリティ ========== */
 function rebuildGenreSelect(){
@@ -678,6 +681,23 @@ function updateRemoveButtonsState(){
 function collectNewQuestion(){
   const genre=els.genreInput?.value.trim();
   const qText=els.questionInput?.value.trim();
+  if(state.appMode === "flashcards"){
+    const front = els.choicesEditArea?.querySelector(".fc-front")?.value.trim() || "";
+    const back  = els.choicesEditArea?.querySelector(".fc-back")?.value.trim() || "";
+    const exp = els.explanationInput?.value.trim() || "";
+    const tags = parseTags(els.tagsInput?.value);
+    if(!genre || !front || !back){ showToast("ジャンル/表/裏 未入力"); return null; }
+    return { mode:"flashcards", genre, front, back, exp, tags };
+  }
+  if(state.appMode === "multiple"){
+    const { choices, correctIndexes } = multipleManage.readMultipleEditor(els.choicesEditArea);
+    const qText = els.questionInput?.value.trim();
+    const exp = els.explanationInput?.value.trim() || "";
+    const tags = parseTags(els.tagsInput?.value);
+    if(!genre || !qText){ showToast("ジャンル/問題文未入力"); return null; }
+    if(choices.length<2){ showToast("選択肢は最低2"); return null; }
+    return { mode:"multiple", genre, question:qText, choices, correctIndexes, exp, tags };
+  }
   if(!els.choicesEditArea) return null;
   const rows=[...els.choicesEditArea.querySelectorAll(".choice-editor-row")];
   const choices=[];
@@ -697,6 +717,17 @@ function collectNewQuestion(){
 }
 
 export function initChoiceEditors(){
+  if(state.appMode === "multiple"){
+    if(!els.choicesEditArea) return;
+    els.choicesEditArea.innerHTML="";
+    multipleManage.buildMultipleEditor(els.choicesEditArea, null);
+    return;
+  }
+  if(state.appMode === "flashcards"){
+    if(!els.choicesEditArea) return;
+    flashManage.buildFlashcardEditor(els.choicesEditArea, null);
+    return;
+  }
   if(!els.choicesEditArea) return;
   els.choicesEditArea.innerHTML="";
   addChoiceInput("",true);

@@ -1,5 +1,6 @@
 import { els } from "./domRefs.js";
 import { state } from "./state.js";
+import { loadMode } from "./modes/registry.js";
 import {
   handleAnswer, handleDontKnow, nextQuestionManual,
   adjustPriorityFactor, renderQuestion,
@@ -37,7 +38,30 @@ import {
 } from "./settingsUI.js";
 import { showScreen, showToast, keyListenerActiveQuiz } from "./utils.js";
 import { saveSettings } from "./storage.js"; // モード保存のために設定保存を呼ぶ
+import multipleUI from "./modes/multiple/ui.js";
+import flashUI from "./modes/flashcards/ui.js";
 
+els.iDontKnowBtn?.addEventListener("click", ()=>{
+  if(state.activeSession?.mode === "multiple"){
+    // 「わからない」は空回答確定扱い
+    multipleUI.submitMultipleAnswer(state.activeSession);
+  } else if(state.activeSession?.mode === "flashcards"){
+    // 単語帳では「知らなかった」相当
+    flashUI.nextFlashcard(state.activeSession);
+  } else {
+    handleDontKnow();
+  }
+});
+
+els.nextQuestionBtn?.addEventListener("click", ()=>{
+  if(state.activeSession?.mode === "multiple"){
+    multipleUI.nextMultiple(state.activeSession);
+  } else if(state.activeSession?.mode === "flashcards"){
+    flashUI.nextFlashcard(state.activeSession);
+  } else {
+    nextQuestionManual();
+  }
+});
 /* モード切替補助 */
 function updateModeButtonsUI() {
   if (!els.modeSingleBtn) return;
@@ -51,10 +75,17 @@ function setAppMode(mode) {
   if (!mode) return;
   state.appMode = mode;
   state.settings.appMode = mode;
-  saveSettings(state.settings); // storage.js の saveSettings を利用
+  saveSettings(state.settings);
+  (async ()=>{
+    try {
+      state.currentModeModule = await loadMode(mode);
+      showToast(`モード切替: ${state.currentModeModule.title}`);
+    } catch(e){
+      showToast("モード読み込み失敗");
+      console.error(e);
+    }
+  })();
   updateModeButtonsUI();
-  showToast(`モードを「${mode}」に切り替えました`);
-  // 将来: registry.loadMode(mode) を呼んで UI/engine を差し替える処理を追加
 }
 
 /* クイズ開始用ラッパ */
