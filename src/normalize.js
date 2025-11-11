@@ -1,3 +1,13 @@
+import { createId } from "./utils.js";
+
+/**
+ * 既存 single 用の構造:
+ * { id,q,choices,answer,exp,tags,stats,flagged,priorityFactor }
+ * multiple 用:
+ * { id,q,choices,correctIndexes:number[],exp,tags,stats,flagged,priorityFactor }
+ * flashcards 用:
+ * { id,front,back,tags,stats:{seen,known},flagged }
+ */
 export function normalizeQuestion(raw){
   // single 判定
   if(raw && Array.isArray(raw.choices) && typeof raw.answer === "number"){

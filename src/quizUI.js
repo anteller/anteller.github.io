@@ -1,8 +1,9 @@
 import { state } from "./state.js";
+import * as singleUI from "./modes/single/core/quizUI.js";
 import multipleUI from "./modes/multiple/ui.js";
 import flashUI from "./modes/flashcards/ui.js";
 
-// 既存 renderQuestion をラップ
+// モードに応じて描画を委譲
 export function renderQuestion(){
   const session = state.activeSession;
   if(session){
@@ -15,10 +16,9 @@ export function renderQuestion(){
       return;
     }
   }
-  // single 既存処理は下に元々ある想定
-  return renderQuestionSingle();
+  // single 既存処理へ
+  return singleUI.renderQuestion();
 }
 
-// 以下は元々 single の実装だった部分 (例: renderQuestionSingle, handleAnswer 等)
-// 元ファイル末尾などで export { renderQuestion } が既にあればそのまま。
+// single の他APIは既存実装をそのまま re-export
 export * from "./modes/single/core/quizUI.js";

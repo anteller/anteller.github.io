@@ -1,7 +1,8 @@
-import { state } from "../../state.js";
 import { els } from "../../domRefs.js";
 import { showToast } from "../../utils.js";
 import multipleEngine from "./engine.js";
+import { saveQuizzes } from "../../storage.js";
+import { state } from "../../state.js";
 
 /**
  * 表示用: 現在の問題を checkbox 群で表示
@@ -33,6 +34,18 @@ export function renderQuestionMultiple(session){
     wrap.append(label);
     els.choicesContainer.appendChild(wrap);
   });
+
+  // 回答確定ボタン（採点→次へ）
+  const submitBtn = document.createElement("button");
+  submitBtn.type="button";
+  submitBtn.className="btn small";
+  submitBtn.textContent="回答確定";
+  submitBtn.addEventListener("click", ()=>{
+    submitMultipleAnswer(session);
+    nextMultiple(session);
+  });
+  els.choicesContainer.appendChild(submitBtn);
+
   if(els.result) els.result.textContent="";
   if(els.subResult) els.subResult.textContent="";
 }
@@ -49,6 +62,9 @@ export function submitMultipleAnswer(session){
   q.stats = q.stats || { c:0, t:0 };
   q.stats.t += 1;
   if(correct) q.stats.c += 1;
+
+  // 保存
+  saveQuizzes(state.appMode);
 
   if(correct){
     session.correctCount++;

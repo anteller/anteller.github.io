@@ -1,5 +1,7 @@
 import { els } from "../../domRefs.js";
 import { showToast } from "../../utils.js";
+import { saveQuizzes } from "../../storage.js";
+import { state } from "../../state.js";
 
 export function renderFlashcard(session){
   const card = session.cards[session.currentIndex];
@@ -28,6 +30,7 @@ export function renderFlashcard(session){
       card.stats = card.stats || { seen:0, known:0 };
       card.stats.seen += 1;
       card.stats.known += 1;
+      saveQuizzes(state.appMode);
       nextFlashcard(session);
     });
     els.choicesContainer.appendChild(knownBtn);
@@ -38,6 +41,7 @@ export function renderFlashcard(session){
     unknownBtn.addEventListener("click", ()=>{
       card.stats = card.stats || { seen:0, known:0 };
       card.stats.seen += 1;
+      saveQuizzes(state.appMode);
       nextFlashcard(session);
     });
     els.choicesContainer.appendChild(unknownBtn);
