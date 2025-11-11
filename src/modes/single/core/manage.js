@@ -23,7 +23,6 @@ import { recordUndo } from "../../../undo.js";
 import { defaultQuizzes } from "../../../defaultQuizzes.js";
 import multipleManage from "../../multiple/manage.js";
 import flashManage from "../../flashcards/manage.js";
-import { state } from "../../../state.js";
 
 /* ========== 内部ユーティリティ ========== */
 function rebuildGenreSelect(){
