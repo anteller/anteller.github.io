@@ -11,10 +11,10 @@ export function renderQuestionMultiple(session){
   const q = session.questions[session.currentIndex];
   if(!q) return;
 
-  if(els.question) els.question.textContent = q.q;
+  if(els.question) els.question.textContent = q.q ?? "";
   if(els.choicesContainer) els.choicesContainer.innerHTML = "";
 
-  q.choices.forEach((text, idx)=>{
+  (q.choices || []).forEach((text, idx)=>{
     const wrap = document.createElement("div");
     wrap.className = "choice";
     const cb = document.createElement("input");
@@ -30,7 +30,7 @@ export function renderQuestionMultiple(session){
     label.style.display="flex";
     label.style.gap="6px";
     label.style.alignItems="center";
-    label.append(cb, document.createTextNode(text));
+    label.append(cb, document.createTextNode(String(text)));
     wrap.append(label);
     els.choicesContainer.appendChild(wrap);
   });
@@ -72,9 +72,14 @@ export function submitMultipleAnswer(session){
   } else {
     if(els.result) els.result.textContent="不正解";
   }
+
+  const correctIndexes = Array.isArray(q.correctIndexes)
+    ? q.correctIndexes
+    : (Number.isInteger(q.answer) ? [q.answer] : []);
+  const choices = Array.isArray(q.choices) ? q.choices : [];
   if(els.subResult){
-    els.subResult.textContent =
-      "正解: " + q.correctIndexes.map(i=>q.choices[i]).join(", ");
+    const texts = correctIndexes.map(i => choices[i]).filter(v=>typeof v!=="undefined");
+    els.subResult.textContent = "正解: " + (texts.length? texts.join(", ") : "(なし)");
   }
 }
 

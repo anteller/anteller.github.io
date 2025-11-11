@@ -5,6 +5,7 @@ import { clone, shuffle } from "../../utils.js";
  * セッション構築:
  *  - genre / limit / lowAccuracy / flaggedOnly は single と同様
  *  - questions は { correctIndexes:[] } を持つ形式
+ *  - single 形式のデータが混在していても補正して扱えるようにする
  */
 function buildSession(genre, opts={}){
   const all = state.quizzes[genre] || [];
@@ -30,7 +31,17 @@ function buildSession(genre, opts={}){
   const limit = opts.limit && Number.isInteger(opts.limit) && opts.limit>0
     ? opts.limit
     : pool.length;
-  const selected = pool.slice(0, limit).map(clone);
+
+  // single 形式の問題も multiple 形式へ補正してから使う
+  const selected = pool.slice(0, limit).map(q=>{
+    const copy = clone(q);
+    if (!Array.isArray(copy.correctIndexes)) {
+      const ans = Number.isInteger(copy.answer) ? copy.answer : 0;
+      copy.correctIndexes = [ans];
+    }
+    if (!Array.isArray(copy.choices)) copy.choices = [];
+    return copy;
+  });
 
   return {
     mode: "multiple",
@@ -50,8 +61,12 @@ function buildSession(genre, opts={}){
  *  - 部分正解や部分点は Phase 3 最小では未対応（後で拡張可能）
  */
 function gradeQuestion(q, userSelections){
-  const correctSet = new Set(q.correctIndexes);
-  const userSet = new Set(userSelections);
+  const correctSet = new Set(
+    Array.isArray(q.correctIndexes)
+      ? q.correctIndexes
+      : (Number.isInteger(q.answer) ? [q.answer] : [])
+  );
+  const userSet = new Set(userSelections || []);
   if(correctSet.size !== userSet.size) return false;
   for(const idx of correctSet){
     if(!userSet.has(idx)) return false;

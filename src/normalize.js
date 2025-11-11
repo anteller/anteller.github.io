@@ -95,3 +95,24 @@ function normalizeFlashcard(r){
     flagged: !!r.flagged
   };
 }
+
+/* ===== 互換用: getAccuracy =====
+ * single / multiple: stats.c / stats.t
+ * flashcards: stats.known / stats.seen
+ * 統計が未集計なら 0 を返す（旧実装で null の可能性があったなら 0 に丸め）。
+ */
+export function getAccuracy(q){
+  if(!q || !q.stats) return 0;
+  // flashcards
+  if(typeof q.front === "string" && typeof q.back === "string"){
+    const seen = q.stats.seen || 0;
+    if(!seen) return 0;
+    const known = q.stats.known || 0;
+    return known / seen;
+  }
+  // single / multiple
+  const t = q.stats.t || 0;
+  if(!t) return 0;
+  const c = q.stats.c || 0;
+  return c / t;
+}
