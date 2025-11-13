@@ -1,13 +1,12 @@
 "use strict";
 
 import { state } from "./state.js";
-import { safeLoadQuizzes, loadSettings, loadGenreOrder } from "./storage.js";
+import { safeLoadQuizzes, loadSettings, loadGenreOrder, migrateIfNeeded } from "./storage.js";
 import { applyTheme, showScreen } from "./utils.js";
 import { rebuildGenreButtons } from "./manage.js";
 import { bindEvents } from "./events.js";
 import { setupGenreMenu } from "./genreMenu.js";
 import { loadMode, DEFAULT_MODE_ID } from "./modes/registry.js";
-import { migrateIfNeeded } from "./migrate.js";
 
 async function init() {
   // 1) 設定復元（先に settings を読んでおく）
@@ -20,8 +19,8 @@ async function init() {
   // 3) クイズデータ読み込み（モードに応じて）
   state.quizzes = safeLoadQuizzes(state.appMode);
 
-  // 4) ジャンル順序等の読み込み
-  loadGenreOrder();
+  // 4) ジャンル順序等の読み込み（モードに応じて）
+  state.genreOrder = loadGenreOrder(state.appMode);
 
   // 5) UI 初期化
   rebuildGenreButtons();

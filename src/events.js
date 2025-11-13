@@ -1,6 +1,5 @@
 import { els } from "./domRefs.js";
 import { state } from "./state.js";
-import { loadMode } from "./modes/registry.js";
 import {
   handleAnswer, handleDontKnow, nextQuestionManual,
   adjustPriorityFactor, renderQuestion,
@@ -37,31 +36,9 @@ import {
   toggleAutoDelayVisibility
 } from "./settingsUI.js";
 import { showScreen, showToast, keyListenerActiveQuiz } from "./utils.js";
-import { saveSettings } from "./storage.js"; // モード保存のために設定保存を呼ぶ
-import multipleUI from "./modes/multiple/ui.js";
-import flashUI from "./modes/flashcards/ui.js";
+import { saveSettings, safeLoadQuizzes, loadGenreOrder } from "./storage.js";
+import { loadMode } from "./modes/registry.js";
 
-els.iDontKnowBtn?.addEventListener("click", ()=>{
-  if(state.activeSession?.mode === "multiple"){
-    // 「わからない」は空回答確定扱い
-    multipleUI.submitMultipleAnswer(state.activeSession);
-  } else if(state.activeSession?.mode === "flashcards"){
-    // 単語帳では「知らなかった」相当
-    flashUI.nextFlashcard(state.activeSession);
-  } else {
-    handleDontKnow();
-  }
-});
-
-els.nextQuestionBtn?.addEventListener("click", ()=>{
-  if(state.activeSession?.mode === "multiple"){
-    multipleUI.nextMultiple(state.activeSession);
-  } else if(state.activeSession?.mode === "flashcards"){
-    flashUI.nextFlashcard(state.activeSession);
-  } else {
-    nextQuestionManual();
-  }
-});
 /* モード切替補助 */
 function updateModeButtonsUI() {
   if (!els.modeSingleBtn) return;
@@ -71,21 +48,41 @@ function updateModeButtonsUI() {
   els.modeFlashBtn.classList.toggle("active", mode === "flashcards");
 }
 
-function setAppMode(mode) {
-  if (!mode) return;
+async function setAppMode(mode) {
+  if (!mode || mode === state.appMode) {
+    updateModeButtonsUI();
+    return;
+  }
+  // 設定反映
   state.appMode = mode;
   state.settings.appMode = mode;
   saveSettings(state.settings);
-  (async ()=>{
-    try {
-      state.currentModeModule = await loadMode(mode);
-      showToast(`モード切替: ${state.currentModeModule.title}`);
-    } catch(e){
-      showToast("モード読み込み失敗");
-      console.error(e);
-    }
-  })();
+
+  // モードモジュールのロード
+  try {
+    state.currentModeModule = await loadMode(mode);
+  } catch (e) {
+    console.error("Failed to load mode module:", e);
+    showToast("モード読み込みに失敗しました");
+    return;
+  }
+
+  // モード専用データの再読込
+  state.quizzes = safeLoadQuizzes(mode);
+  state.genreOrder = loadGenreOrder(mode);
+  state.currentGenre = null;
+  state.selectedQuestionIds.clear();
+  state.tagFilter = "";
+
+  // UI再構築（ホーム/管理もモードごとの内容に切替）
+  rebuildGenreButtons();
+  rebuildManageList();
+
+  // 一貫性のためホームへ戻す（モード切替はホームで行う運用）
+  showScreen("genreSelect");
+
   updateModeButtonsUI();
+  showToast(`モードを「${mode}」に切り替えました`);
 }
 
 /* クイズ開始用ラッパ */
@@ -213,6 +210,9 @@ export function bindEvents(){
     if(state.quizzes[g]){ alert("既に存在します"); return; }
     state.quizzes[g]=[];
     state.genreOrder.push(g);
+    // モード別保存
+    saveGenreOrder(state.genreOrder, state.appMode);
+    saveQuizzes(state.appMode);
     rebuildGenreButtons();
     showToast(`ジャンル「${g}」追加`);
   });
@@ -308,7 +308,6 @@ export function bindEvents(){
     state.tagFilter = els.tagFilterInput.value.trim();
     rebuildManageList();
   });
-
   // 既存のフィルタボタン/Enterキー適用は廃止
   // els.applyFilterBtn?.addEventListener("click", ...)
   // els.clearFilterBtn?.addEventListener("click", ...)
