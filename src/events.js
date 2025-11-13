@@ -41,7 +41,6 @@ import { loadMode } from "./modes/registry.js";
 import multipleUI from "./modes/multiple/ui.js";
 import flashUI from "./modes/flashcards/ui.js";
 
-/* モード切替補助 */
 function updateModeButtonsUI() {
   if (!els.modeSingleBtn) return;
   const mode = state.appMode || "single";
@@ -67,12 +66,10 @@ async function setAppMode(mode) {
   state.currentIndex = 0;
   state.answered = false;
 
-  // 設定反映
   state.appMode = mode;
   state.settings.appMode = mode;
   saveSettings(state.settings);
 
-  // モードモジュールのロード
   try {
     state.currentModeModule = await loadMode(mode);
   } catch (e) {
@@ -81,25 +78,19 @@ async function setAppMode(mode) {
     return;
   }
 
-  // モード専用データの再読込
   state.quizzes = safeLoadQuizzes(mode);
   state.genreOrder = loadGenreOrder(mode);
   state.currentGenre = null;
   state.selectedQuestionIds.clear();
   state.tagFilter = "";
-
-  // UI再構築（ホーム/管理もモードごとの内容に切替）
   rebuildGenreButtons();
   rebuildManageList();
 
-  // ホームへ戻る
   showScreen("genreSelect");
-
   updateModeButtonsUI();
-  showToast(`モードを「${els.currentModeLabel?.textContent || mode}」に切り替えました`);
+  showToast(`モード: ${els.currentModeLabel?.textContent || mode}`);
 }
 
-/* クイズ開始用ラッパ */
 function startQuizNormal(g,limit){
   if(startQuizMode(g,{limit,lowAccuracy:false})){
     showScreen("quizScreen");
@@ -113,31 +104,27 @@ function startQuizLowAcc(g,limit){
   }
 }
 function startQuizFlaggedOnly(g){
-  if(startQuizMode(g,{flaggedOnly:true})){ 
+  if(startQuizMode(g,{flaggedOnly:true})){
     showScreen("quizScreen");
     renderQuestion();
   }
 }
 
 export function bindEvents(){
-  /* ==== モード切替ボタン ==== */
   els.modeSingleBtn?.addEventListener("click", ()=>setAppMode("single"));
   els.modeMultipleBtn?.addEventListener("click", ()=>setAppMode("multiple"));
   els.modeFlashBtn?.addEventListener("click", ()=>setAppMode("flashcards"));
   updateModeButtonsUI();
 
-  /* ==== キーボード ==== */
   window.addEventListener("keydown", e=>{
     const session = state.activeSession;
     if(session?.mode === "multiple"){
-      // Enter → 次へ（回答済みなら）
       if(e.key==="Enter" || e.key===" "){
         if(state.answered){
           multipleUI.nextMultiple(session);
         }
         return;
       }
-      // 数字キー → 選択トグル（回答確定前は採点しない）
       if(/^[1-9]$/.test(e.key)){
         const idx = +e.key - 1;
         const cb = els.choicesContainer?.querySelector(`.choice[data-index='${idx}'] input[type=checkbox]`);
@@ -147,17 +134,14 @@ export function bindEvents(){
         }
         return;
       }
-      // 0キー / その他は無視
       return;
     }
     if(session?.mode === "flashcards"){
       if(e.key==="Enter" || e.key===" "){
         flashUI.nextFlashcard(session);
-        return;
       }
       return;
     }
-    // single モード既存処理
     if(state.answered && state.settings.progressMode==="manual" && (e.key==="Enter"||e.key===" ")){
       nextQuestionManual();
       return;
@@ -172,11 +156,9 @@ export function bindEvents(){
     }
   });
 
-  /* ==== 回答画面 ==== */
   els.iDontKnowBtn?.addEventListener("click", ()=>{
     const session=state.activeSession;
     if(session?.mode==="multiple"){
-      // 「わからない」は回答確定扱い（空選択）
       multipleUI.submitMultipleAnswer(session);
       state.answered=true;
       multipleUI.nextMultiple(session);

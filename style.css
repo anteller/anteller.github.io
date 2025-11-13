@@ -388,3 +388,31 @@ body.is-mobile-os #manageScreen .genre-filter-label,
 body.is-mobile-os #manageScreen #genreFilterSelect {
   display:none !important;
 }
+.mode-toggle .mode-btn {
+  background: var(--c-button-bg, var(--c-surface));
+  border: 1px solid var(--c-border, #ccc);
+  color: var(--c-text);
+  transition: background .15s, color .15s, border-color .15s;
+}
+.mode-toggle .mode-btn.active {
+  background: linear-gradient(135deg, var(--c-accent,#6366f1) 0%, var(--c-accent-soft,#818cf8) 100%);
+  color: #fff;
+  border-color: var(--c-accent,#6366f1);
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.35);
+}
+@media (prefers-color-scheme: dark) {
+  .mode-toggle .mode-btn {
+    background: var(--c-surface, #1e1e24);
+    border-color: var(--c-border, #3c3c47);
+  }
+  .mode-toggle .mode-btn.active {
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.55);
+  }
+}
+/* 選択肢行の共通色（複数選択モード） */
+.choice {
+  background: var(--c-surface);
+}
+[data-theme="dark"] .choice {
+  background: var(--c-surface-alt, #23232a);
+}
