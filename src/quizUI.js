@@ -3,7 +3,6 @@ import * as singleUI from "./modes/single/core/quizUI.js";
 import multipleUI from "./modes/multiple/ui.js";
 import flashUI from "./modes/flashcards/ui.js";
 
-// モードに応じて描画を委譲
 export function renderQuestion(){
   const session = state.activeSession;
   if(session){
@@ -16,9 +15,8 @@ export function renderQuestion(){
       return;
     }
   }
-  // single 既存処理へ
-  return singleUI.renderQuestion();
+  singleUI.renderQuestion();
 }
 
-// single の他APIは既存実装をそのまま re-export
+// 以下 single のエクスポート維持
 export * from "./modes/single/core/quizUI.js";
