@@ -152,7 +152,7 @@ export function submitMultipleAnswer(session){
 
   // 結果表示
   if(els.result){
-    els.result.textContent = correct? "正解！":"不正解";
+    els.result.textContent = correct? "〇 正解！":"✕ 不正解";
     els.result.style.color = correct? "rgb(34,197,94)" : "rgb(239,68,68)";
   }
 
