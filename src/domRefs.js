@@ -2,6 +2,8 @@
 export const $ = (q)=>document.querySelector(q);
 
 export const els = {
+  currentModeIndicator: $("#currentModeIndicator"),
+  currentModeLabel: $("#currentModeLabel"),
   genreSelect: $("#genreSelect"),
   quizScreen: $("#quizScreen"),
   resultScreen: $("#resultScreen"),
