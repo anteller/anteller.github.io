@@ -1,98 +1,56 @@
-import multipleManage from "../../multiple/manage.js";
-import flashManage from "../../flashcards/manage.js";
+/**
+ * multiple モード用エディタ差し替え関数
+ * - single のエディタを拡張し、正解チェックを複数可にする
+ * - 既存 manage から呼び出される想定で、オーバーライド用の API を提供
+ */
 
-// initChoiceEditors
-export function initChoiceEditors(){
-  if(!els.choicesEditArea) return;
-  if(state.appMode === "multiple"){
-    els.choicesEditArea.innerHTML="";
-    multipleManage.buildMultipleEditor(els.choicesEditArea,null);
-    return;
-  }
-  if(state.appMode === "flashcards"){
-    els.choicesEditArea.innerHTML="";
-    flashManage.buildFlashcardEditor(els.choicesEditArea,null);
-    return;
-  }
-  els.choicesEditArea.innerHTML="";
-  addChoiceInput("",true);
-  addChoiceInput("",false);
-  updateRemoveButtonsState();
-}
+export function buildMultipleEditor(choicesEditArea, questionObj){
+  if(!choicesEditArea) return;
+  choicesEditArea.innerHTML="";
 
-// collectNewQuestion
-function collectNewQuestion(){
-  const genre=els.genreInput?.value.trim();
+  const choices = questionObj?.choices || ["選択肢1","選択肢2"];
+  const correctIndexes = new Set(questionObj?.correctIndexes || [0]);
 
-  if(state.appMode === "flashcards"){
-    const front = els.choicesEditArea?.querySelector(".fc-front")?.value.trim() || "";
-    const back  = els.choicesEditArea?.querySelector(".fc-back")?.value.trim() || "";
-    const exp   = els.explanationInput?.value.trim() || "";
-    const tags  = parseTags(els.tagsInput?.value);
-    if(!genre || !front || !back){ showToast("ジャンル/表/裏 未入力"); return null; }
-    return { mode:"flashcards", genre, front, back, exp, tags };
-  }
+  choices.forEach((c,i)=>{
+    const row = document.createElement("div");
+    row.className="choice-editor-row";
+    const checkWrap = document.createElement("label");
+    checkWrap.className="radio-wrap";
+    const cb = document.createElement("input");
+    cb.type="checkbox";
+    cb.value=String(i);
+    cb.checked = correctIndexes.has(i);
+    const span = document.createElement("span");
+    span.textContent="正解";
+    checkWrap.append(cb,span);
 
-  if(state.appMode === "multiple"){
-    const { choices, correctIndexes } = multipleManage.readMultipleEditor(els.choicesEditArea);
-    const qText = els.questionInput?.value.trim();
-    const exp   = els.explanationInput?.value.trim() || "";
-    const tags  = parseTags(els.tagsInput?.value);
-    if(!genre || !qText){ showToast("ジャンル/問題文未入力"); return null; }
-    if(choices.length < 2){ showToast("選択肢は最低2"); return null; }
-    if(!correctIndexes.length){ showToast("正解を1つ以上選んでください"); return null; }
-    return { mode:"multiple", genre, question:qText, choices, correctIndexes, exp, tags };
-  }
+    const input = document.createElement("input");
+    input.type="text";
+    input.className="choiceText";
+    input.value=c;
+    input.placeholder=`選択肢 ${i+1}`;
 
-  // single
-  const qText=els.questionInput?.value.trim();
-  if(!els.choicesEditArea) return null;
-  const rows=[...els.choicesEditArea.querySelectorAll(".choice-editor-row")];
-  const choices=[];
-  rows.forEach(r=>{
-    const v=r.querySelector(".choiceText")?.value.trim();
-    if(v!=="") choices.push(v);
+    row.append(checkWrap,input);
+    choicesEditArea.appendChild(row);
   });
-  if(choices.length<2){ showToast(`選択肢は最低2`); return null; }
-  const radios=[...els.choicesEditArea.querySelectorAll('input[name="correctAnswer"]')];
-  const checked=radios.find(r=>r.checked);
-  let answer=checked? +checked.value:0;
-  if(answer<0 || answer>=choices.length) answer=0;
-  const exp=els.explanationInput?.value.trim() || "";
-  const tags=parseTags(els.tagsInput?.value);
-  if(!genre || !qText){ showToast("ジャンル/問題文未入力"); return null; }
-  return { mode:"single", genre, question:qText, choices, answer, exp, tags };
 }
 
-// populateEditForm（差し替え）
-export function populateEditForm(genre,index){
-  const arr=state.quizzes[genre];
-  if(!arr || !arr[index]) return;
-  const q=arr[index];
-  state.isEditingQuestion=true; state.editingIndex=index;
-
-  if(els.addEditTitle) els.addEditTitle.textContent=`問題を編集 (No.${index+1})`;
-  if(els.addFormButtons) els.addFormButtons.style.display="none";
-  if(els.editFormButtons) els.editFormButtons.style.display="flex";
-  if(els.genreInput){
-    els.genreInput.value=genre;
-    els.genreInput.disabled=true;
-  }
-
-  if(els.questionInput) els.questionInput.value = q.q || q.front || "";
-  if(els.explanationInput) els.explanationInput.value = q.exp || "";
-  if(els.tagsInput) els.tagsInput.value = q.tags? q.tags.join(",") : "";
-
-  if(els.choicesEditArea){
-    els.choicesEditArea.innerHTML="";
-    if(state.appMode === "multiple" && Array.isArray(q.choices)){
-      multipleManage.buildMultipleEditor(els.choicesEditArea, q);
-    } else if(state.appMode === "flashcards" && typeof q.front === "string"){
-      flashManage.buildFlashcardEditor(els.choicesEditArea, q);
-    } else {
-      (q.choices || []).forEach((c,i)=>addChoiceInput(c,i===q.answer));
-      updateRemoveButtonsState();
-    }
-  }
-  showScreen("addScreen");
+export function readMultipleEditor(choicesEditArea){
+  if(!choicesEditArea) return { choices:[], correctIndexes:[] };
+  const rows=[...choicesEditArea.querySelectorAll(".choice-editor-row")];
+  const choices=[];
+  const correctIndexes=[];
+  rows.forEach((r,i)=>{
+    const txt = r.querySelector(".choiceText")?.value.trim();
+    if(txt) choices.push(txt);
+    const cb = r.querySelector("input[type=checkbox]");
+    if(cb?.checked) correctIndexes.push(i);
+  });
+  if(!correctIndexes.length && choices.length) correctIndexes.push(0);
+  return { choices, correctIndexes };
 }
+
+export default {
+  buildMultipleEditor,
+  readMultipleEditor
+};
