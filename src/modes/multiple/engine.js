@@ -22,8 +22,8 @@ function buildWeightedLowAccuracyPool(original, limit){
 
 /**
  * セッション構築:
- * - flaggedOnly/lowAccuracy/limit は single と同等の意味
- * - questions は { correctIndexes:[] } を持つ形式に正規化して扱う
+ * - flaggedOnly/lowAccuracy/limit は single と同等
+ * - questions は { correctIndexes:[] } に正規化
  */
 function buildSession(genre, opts={}){
   const all = state.quizzes[genre] || [];
@@ -44,7 +44,7 @@ function buildSession(genre, opts={}){
     if(opts.limit && opts.limit>0 && opts.limit<pool.length) pool = pool.slice(0, opts.limit);
   }
 
-  // single 形式の問題も multiple 形式へ補正
+  // single 形式 → multiple 形式へ補正
   const selected = pool.map(q=>{
     const copy = clone(q);
     if (!Array.isArray(copy.correctIndexes)) {

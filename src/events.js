@@ -96,7 +96,7 @@ async function setAppMode(mode) {
   showToast(`モードを「${els.currentModeLabel?.textContent || mode}」に切り替えました`);
 }
 
-/* クイズ開始ラッパ */
+/* クイズ開始 */
 function startQuizNormal(g,limit){
   if(startQuizMode(g,{limit,lowAccuracy:false})){
     showScreen("quizScreen");
@@ -127,7 +127,7 @@ export function bindEvents(){
   window.addEventListener("keydown", e=>{
     const session = state.activeSession;
     if(session?.mode === "multiple"){
-      // Enter/Space: 未確定なら採点、確定済みなら次へ
+      // Enter/Space: 未確定→採点、確定済→次へ
       if(e.key==="Enter" || e.key===" "){
         if(!state.answered){
           multipleUI.submitMultipleAnswer(session);
@@ -208,7 +208,7 @@ export function bindEvents(){
     showToast(newState? "要チェックに追加":"要チェックを解除");
   });
 
-  /* 出題率調整 */
+  /* 出題率調整（低正答率モードでUIが表示される） */
   els.priorityUpBtn?.addEventListener("click", ()=>{
     const m=state.settings.priorityIncreaseMultiplier || 1.4;
     adjustPriorityFactor(m);
@@ -255,7 +255,7 @@ export function bindEvents(){
     showToast(`ジャンル「${g}」追加`);
   });
 
-  /* 管理画面遷移 */
+  /* 管理画面遷移/戻る（manageBackBtn と manageBackBtn2 の両方を見る） */
   els.manageBtn?.addEventListener("click", ()=>{
     if(!state.currentGenre){
       const first=state.genreOrder[0];
@@ -264,7 +264,8 @@ export function bindEvents(){
     }
     showManageScreen(state.currentGenre);
   });
-
+  els.manageBackBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
+  els.manageBackBtn2?.addEventListener("click", ()=>showScreen("genreSelect"));
   els.genreManageBtn?.addEventListener("click", ()=>showGenreManage());
 
   /* 戻り/再挑戦 */
@@ -315,7 +316,7 @@ export function bindEvents(){
     showManageScreen(state.currentGenre);
   });
 
-  /* 管理画面操作 */
+  /* 管理画面操作（省略部は既存のまま） */
   els.manageListWrap?.addEventListener("click", onManageListClick);
   els.manageListWrap?.addEventListener("change", handleManageCheckboxChange);
   els.selectAllBtn?.addEventListener("click", ()=>{
@@ -343,35 +344,6 @@ export function bindEvents(){
   els.tagFilterInput?.addEventListener("input", ()=>{
     state.tagFilter = els.tagFilterInput.value.trim();
     rebuildManageList();
-  });
-
-  /* ジャンルフィルタ */
-  els.genreFilterSelect?.addEventListener("change", ()=>{
-    const val=els.genreFilterSelect.value;
-    if(val==="__ALL__"){
-      if(els.manageTitle) els.manageTitle.textContent="問題管理 - (すべて)";
-    } else {
-      state.currentGenre=val;
-      if(els.manageTitle) els.manageTitle.textContent=`問題管理 - ${val} (全${(state.quizzes[val]||[]).length}問)`;
-    }
-    state.selectedQuestionIds.clear();
-    rebuildManageList();
-    updateBulkUI();
-  });
-
-  /* エクスポート / インポート */
-  els.genreExportBtn?.addEventListener("click", exportCurrentGenre);
-  els.genreImportBtn?.addEventListener("click", ()=>{
-    const val=els.genreFilterSelect ? els.genreFilterSelect.value : state.currentGenre;
-    if(val==="__ALL__"){ showToast("「(すべて)」表示中はインポート先不明"); return; }
-    if(!val){ showToast("ジャンル未選択"); return; }
-    els.genreImportFile?.click();
-  });
-  els.genreImportFile?.addEventListener("change", e=>{
-    const file=e.target.files && e.target.files[0];
-    if(!file) return;
-    importGenreFromFile(file);
-    e.target.value="";
   });
 
   /* ジャンル管理画面 */

@@ -1,0 +1,58 @@
+/* 追加の見た目修正（全モード共通の軽微なUIバグ修正） */
+
+/* 1) ジャンル選択のボタン横の三点メニューの垂直ずれ修正 */
+.genre-row,
+.genre-actions-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.genre-btn {
+  display: inline-flex;
+  align-items: center;
+}
+.genre-more-btn, /* 三点マークのボタン想定 */
+.genre-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  padding: 0;
+}
+
+/* 2) ライトモードで出題モードバッジが黒くなる問題の緩和 */
+#currentModeIndicator,
+#currentModeIndicator #currentModeLabel {
+  color: var(--c-text-sub, #475569);
+}
+
+/* 3) 三点マークにホバーした際に隣のジャンルボタンが青くなる問題の回避
+   - 親要素の :hover 連鎖でボタンに色が入らないように限定セレクタ化 */
+.genre-list .genre-item:hover .genre-more-btn:hover {
+  background: var(--c-primary-ghost, rgba(37, 99, 235, 0.1));
+}
+.genre-list .genre-item .genre-btn:hover {
+  background: var(--c-primary-ghost, rgba(37, 99, 235, 0.08));
+}
+
+/* 4) choice ボタン/行の見栄え（既存に上書きされない程度の穏当な指定） */
+.choice .badge {
+  color: var(--c-primary, #2563eb);
+}
+
+/* 5) ライト/ダークのボーダー色のフォールバック */
+:root {
+  --c-primary: #2563eb;        /* blue-600 */
+  --c-primary-ghost: rgba(37,99,235,0.08);
+  --c-surface: #fff;
+  --c-text-sub: #475569;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --c-surface: #0b0f16;
+    --c-text-sub: #94a3b8;
+  }
+}
