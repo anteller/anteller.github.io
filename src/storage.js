@@ -9,7 +9,7 @@ import { state } from "./state.js";
 import { normalizeQuestion } from "./normalize.js";
 import { clone } from "./utils.js";
 import { defaultQuizzes } from "./defaultQuizzes.js";
-
+import { defaultQuizzesMultiple } from "./defaultQuizzesMultiple.js";
 /**
  * 既存の migrateQuizzes を保持（内部データ正規化）
  */
@@ -73,7 +73,9 @@ export function safeLoadQuizzes(mode){
           }
         }
       }
-      // デフォルトを返す（既存の挙動を維持）
+      if ((mode || state.settings?.appMode) === "multiple") {
+        return migrateQuizzes(clone(defaultQuizzesMultiple));
+      }
       return migrateQuizzes(clone(defaultQuizzes));
     }
 

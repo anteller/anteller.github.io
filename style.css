@@ -416,3 +416,66 @@ body.is-mobile-os #manageScreen #genreFilterSelect {
 [data-theme="dark"] .choice {
   background: var(--c-surface-alt, #23232a);
 }
+/* ジャンルボタンと三点ボタンの縦位置を中央に */
+.genre-row,
+.genre-item,
+.genre-line,
+.genre-buttons {
+  display: flex;
+  align-items: center;
+}
+.genre-btn {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+}
+
+/* 三点（ケバブ）ボタンを個別にスタイルして hover を限定 */
+.kebab-btn, .more-btn, .genre-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  margin-left: 8px;
+  border: 1px solid var(--c-border, #d1d5db);
+  background: var(--c-surface);
+  color: var(--c-text);
+  cursor: pointer;
+}
+.kebab-btn:hover,
+.more-btn:hover,
+.genre-menu-btn:hover {
+  background: rgba(59,130,246,0.10);
+  border-color: var(--c-accent, #3b82f6);
+}
+/* 親の hover で子が青くならないように（よくある副作用の打ち消し） */
+.genre-btn:hover .kebab-btn,
+.genre-btn:hover .more-btn,
+.genre-btn:hover .genre-menu-btn {
+  background: var(--c-surface);
+  border-color: var(--c-border, #d1d5db);
+}
+
+/* ライトモードでモード切替タブが黒潰れする問題の明示色 */
+:root[data-theme="light"] .mode-toggle .btn,
+:root[data-theme="light"] .mode-toggle .mode-btn {
+  color: #111827;               /* text-gray-900 */
+  background: #ffffff;
+  border: 1px solid #e5e7eb;    /* gray-200 */
+}
+:root[data-theme="light"] .mode-toggle .btn.active,
+:root[data-theme="light"] .mode-toggle .mode-btn.active {
+  color: #ffffff;
+  background: #3b82f6;          /* blue-500 */
+  border-color: #3b82f6;
+}
+
+/* 複数選択の .choice（button化）をベース整形 */
+.choice {
+  transition: background-color .12s ease, border-color .12s ease;
+}
+.choice .badge {
+  font-size: 0.95em;
+}

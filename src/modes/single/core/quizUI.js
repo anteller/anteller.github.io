@@ -3,6 +3,7 @@ import { els } from "../../../domRefs.js";
 import { showScreen, clearAutoTimer, showToast } from "../../../utils.js";
 import { saveQuizzes } from "../../../storage.js";
 
+/* ===== 共通: フラグ操作 ===== */
 export function toggleFlag(genre,id){
   const arr=state.quizzes[genre];
   if(!arr) return;
@@ -30,6 +31,7 @@ export function updateFlagButtonForCurrent(){
   els.flagToggleBtn.textContent=flagged?"★ 要チェック":"☆ 要チェック";
 }
 
+/* ===== 共通: 選択肢ボタン生成 ===== */
 function buildChoiceButton(text,i,onClick){
   const btn=document.createElement("button");
   btn.type="button";
@@ -42,10 +44,11 @@ function buildChoiceButton(text,i,onClick){
   const label=document.createElement("span");
   label.textContent=text;
   btn.append(badge,label);
-  btn.addEventListener("click",()=>onClick(i));
+  btn.addEventListener("click",()=>onClick(i,btn));
   return btn;
 }
 
+/* ===== 共通: 低正答率モード時の出題率調整UI ===== */
 function updatePriorityAdjustUI(){
   if(!els.priorityAdjustWrap) return;
   const lowMode=!!state.lastSession.lowAccuracy;
@@ -56,10 +59,13 @@ function updatePriorityAdjustUI(){
   const currentQ=state.questions[state.currentIndex];
   const orig=state.quizzes[state.currentGenre].find(q=>q.id===currentQ.id);
   const pf=orig?.priorityFactor ?? 1;
-  els.priorityIndicator.textContent="x"+pf.toFixed(2);
+  if(els.priorityIndicator) els.priorityIndicator.textContent="x"+pf.toFixed(2);
   els.priorityAdjustWrap.classList.remove("hidden");
 }
 
+/* =========================================================
+ *  択一モード（従来）
+ * =======================================================*/
 export function renderQuestion(){
   clearAutoTimer();
   state.answered=false;
@@ -76,7 +82,9 @@ export function renderQuestion(){
   els.progress.textContent=`進捗: ${state.currentIndex+1} / ${state.questions.length}`;
   els.question.textContent=qObj.q;
   els.choicesContainer.innerHTML="";
-  qObj.choices.forEach((txt,i)=>els.choicesContainer.appendChild(buildChoiceButton(txt,i,handleAnswer)));
+  qObj.choices.forEach((txt,i)=>els.choicesContainer.appendChild(
+    buildChoiceButton(txt,i,(idx)=>handleAnswer(idx))
+  ));
   if(els.iDontKnowBtn){
     els.iDontKnowBtn.disabled=false;
     els.iDontKnowBtn.style.opacity="1";
@@ -102,8 +110,9 @@ export function handleAnswer(idx,forcedDontKnow=false){
   const arr=state.quizzes[state.currentGenre];
   const orig=arr? arr.find(q=>q.id===presentedQ.id):null;
   if(orig){
+    if(!orig.stats) orig.stats={c:0,t:0};
     orig.stats.t+=1;
-    if(isCorrect) orig.stats.c+=1;
+    if(isCorrect && !forcedDontKnow) orig.stats.c+=1;
     saveQuizzes();
   }
   const choiceEls=[...els.choicesContainer.querySelectorAll(".choice")];
@@ -113,6 +122,7 @@ export function handleAnswer(idx,forcedDontKnow=false){
     if(i===presentedQ.answer) c.classList.add("correct");
     if(!forcedDontKnow && i===idx && !isCorrect) c.classList.add("wrong");
   });
+
   if(isCorrect){
     els.result.textContent="〇 正解！";
     els.result.style.color="var(--c-ok)";
@@ -165,7 +175,7 @@ export function adjustPriorityFactor(mult){
   saveQuizzes();
   showToast(`出題率: x${orig.priorityFactor.toFixed(2)}`);
   const lowMode=!!state.lastSession.lowAccuracy;
-  if(lowMode) els.priorityIndicator.textContent="x"+orig.priorityFactor.toFixed(2);
+  if(lowMode && els.priorityIndicator) els.priorityIndicator.textContent="x"+orig.priorityFactor.toFixed(2);
 }
 
 export function retryWrongOnly(){
@@ -244,7 +254,7 @@ export function showResult(){
         if(q.exp && q.exp.trim()!==""){
           const expDiv=document.createElement("div");
           expDiv.className="exp";
-          expDiv.textContent=q.exp;
+            expDiv.textContent=q.exp;
           li.appendChild(expDiv);
         }
         els.rightList.appendChild(li);
@@ -252,3 +262,166 @@ export function showResult(){
     }
   }
 }
+
+/* =========================================================
+ *  複数選択モード（択一との差分だけ）
+ *  - クリック：選択トグル（採点しない）
+ *  - 「回答確定」or Enter/Space：採点
+ * =======================================================*/
+
+/* 現在の選択配列取得・更新 */
+function getMultiSelection(session){
+  const sel = session.answers[session.currentIndex];
+  return Array.isArray(sel)? sel.slice() : [];
+}
+function setMultiSelection(session, sel){
+  session.answers[session.currentIndex] = sel.slice();
+}
+
+export function renderQuestionMultiple(session){
+  clearAutoTimer();
+  state.answered=false;
+  els.explanationBox.classList.remove("visible");
+  els.explanationBox.textContent="";
+  els.nextQuestionBtn.style.display="none";
+  els.result.textContent="";
+  els.subResult.textContent="";
+
+  if(state.currentIndex>=state.questions.length){
+    showResult();
+    return;
+  }
+  const qObj=state.questions[state.currentIndex];
+  els.progress.textContent=`進捗: ${state.currentIndex+1} / ${state.questions.length}`;
+  els.question.textContent=qObj.q;
+  els.choicesContainer.innerHTML="";
+  const currentSel = new Set(getMultiSelection(session));
+  qObj.choices.forEach((txt,i)=>{
+    const btn = buildChoiceButton(txt,i,(idx,el)=>{
+      if(state.answered) return;
+      if(currentSel.has(idx)) currentSel.delete(idx); else currentSel.add(idx);
+      setMultiSelection(session,[...currentSel].sort((a,b)=>a-b));
+      // 選択中視覚的反映（採点前は色のみ）
+      el.classList.toggle("selected", currentSel.has(idx));
+    });
+    if(currentSel.has(i)) btn.classList.add("selected");
+    els.choicesContainer.appendChild(btn);
+  });
+
+  const confirmBtn=document.createElement("button");
+  confirmBtn.type="button";
+  confirmBtn.className="btn small";
+  confirmBtn.textContent="回答確定";
+  confirmBtn.style.marginTop="12px";
+  confirmBtn.addEventListener("click",()=>{
+    submitMultipleAnswer(session);
+  });
+  els.choicesContainer.appendChild(confirmBtn);
+
+  if(els.iDontKnowBtn){
+    els.iDontKnowBtn.disabled=false;
+    els.iDontKnowBtn.style.opacity="1";
+    els.iDontKnowBtn.style.display="inline-flex";
+  }
+
+  updateFlagButtonForCurrent();
+  updatePriorityAdjustUI();
+}
+
+export function submitMultipleAnswer(session,{forcedDontKnow=false}={}){
+  if(state.answered) return;
+  const presentedQ=state.questions[state.currentIndex];
+  if(!presentedQ) return;
+
+  const userSel = getMultiSelection(session);
+  const correctSet = new Set(
+    Array.isArray(presentedQ.correctIndexes)
+      ? presentedQ.correctIndexes
+      : [presentedQ.answer]
+  );
+  const selSet = new Set(userSel);
+  let isCorrect = !forcedDontKnow &&
+    correctSet.size===selSet.size &&
+    [...correctSet].every(i=>selSet.has(i));
+
+  // 統計更新
+  const arr=state.quizzes[state.currentGenre];
+  const orig=arr? arr.find(q=>q.id===presentedQ.id):null;
+  if(orig){
+    if(!orig.stats) orig.stats={c:0,t:0};
+    orig.stats.t+=1;
+    if(isCorrect && !forcedDontKnow) orig.stats.c+=1;
+    saveQuizzes();
+  }
+
+  // 選択肢の採点表示
+  const choiceEls=[...els.choicesContainer.querySelectorAll(".choice")];
+  choiceEls.forEach(c=>c.disabled=true);
+  choiceEls.forEach(c=>{
+    const idx=parseInt(c.dataset.index,10);
+    if(correctSet.has(idx)) c.classList.add("correct");
+    if(!forcedDontKnow && selSet.has(idx) && !correctSet.has(idx)) c.classList.add("wrong");
+  });
+
+  state.answered=true;
+  if(els.iDontKnowBtn){
+    els.iDontKnowBtn.disabled=true;
+    els.iDontKnowBtn.style.opacity=".55";
+  }
+
+  if(els.result){
+    if(forcedDontKnow){
+      els.result.textContent="✕ わからない";
+      els.result.style.color="var(--c-warn)";
+      state.wrongQuestions.push(presentedQ);
+    } else if(isCorrect){
+      els.result.textContent="〇 正解！";
+      els.result.style.color="var(--c-ok)";
+      state.correctCount++;
+      state.correctQuestions.push(presentedQ);
+    } else {
+      els.result.textContent="✕ 不正解";
+      els.result.style.color="var(--c-warn)";
+      state.wrongQuestions.push(presentedQ);
+    }
+  }
+
+  if(!isCorrect && !forcedDontKnow && els.subResult){
+    const texts=[...correctSet].map(i=>presentedQ.choices[i]).filter(Boolean);
+    els.subResult.textContent="正解: "+texts.join(", ");
+  } else if(forcedDontKnow && els.subResult){
+    const texts=[...correctSet].map(i=>presentedQ.choices[i]).filter(Boolean);
+    els.subResult.textContent="正解: "+texts.join(", ");
+  }
+
+  if(presentedQ.exp && presentedQ.exp.trim()!==""){
+    els.explanationBox.textContent=presentedQ.exp;
+    els.explanationBox.classList.add("visible");
+  }
+
+  updatePriorityAdjustUI();
+
+  if(state.settings.progressMode==="auto"){
+    const delayMs=Math.max(0,state.settings.autoDelaySeconds*1000);
+    state.autoTimerId=setTimeout(()=>{
+      nextQuestionMultiple(session);
+    },delayMs);
+  } else {
+    els.nextQuestionBtn.style.display="inline-flex";
+    els.nextQuestionBtn.focus();
+  }
+}
+
+export function nextQuestionMultiple(session){
+  state.currentIndex++;
+  if(state.currentIndex>=state.questions.length){
+    showResult();
+    return;
+  }
+  renderQuestionMultiple(session);
+}
+
+/* 旧API互換のため multiple 用名前を集約 */
+export const renderQuestionMultiple = renderQuestionMultiple; // (自分自身)
+export const submitMultipleAnswer = submitMultipleAnswer;
+export const nextMultiple = nextQuestionMultiple;

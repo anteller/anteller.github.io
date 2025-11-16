@@ -136,6 +136,23 @@ export function bindEvents(){
         }
         return;
       }
+    if(session?.mode === "multiple"){
+      if(e.key==="Enter" || e.key===" "){
+        if(!state.answered){
+          multipleUI.submitMultipleAnswer(session);
+        } else {
+          multipleUI.nextMultiple(session);
+        }
+        return;
+      }
+      if(/^[1-9]$/.test(e.key)){
+        const idx = +e.key - 1;
+        const btn = els.choicesContainer?.querySelector(`.choice[data-index='${idx}']`);
+        if(btn) btn.click(); // button化したので click で十分
+        return;
+      }
+      return;
+    }
       // 数字キー: トグルのみ
       if(/^[1-9]$/.test(e.key)){
         const idx = +e.key - 1;
@@ -265,6 +282,8 @@ export function bindEvents(){
     showManageScreen(state.currentGenre);
   });
 
+  els.manageBackBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
+  els.manageBackBtn2?.addEventListener("click", ()=>showScreen("genreSelect"));
   els.genreManageBtn?.addEventListener("click", ()=>showGenreManage());
 
   /* 戻り/再挑戦 */
