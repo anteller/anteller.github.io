@@ -10,7 +10,11 @@
 <body data-theme="auto">
 <div class="container">
   <h1>クイズ集</h1>
-
+  <div id="modeToggle" class="mode-toggle" style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
+    <button id="modeSingleBtn" class="btn small mode-btn" type="button" data-mode="single">択一</button>
+    <button id="modeMultipleBtn" class="btn small mode-btn" type="button" data-mode="multiple">複数解答</button>
+    <button id="modeFlashBtn" class="btn small mode-btn" type="button" data-mode="flashcards">単語帳</button>
+  </div>
   <!-- ジャンル選択 -->
   <div id="genreSelect" class="panel" data-screen="genreSelect">
     <p>ジャンルを選んでください</p>

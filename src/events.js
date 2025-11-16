@@ -35,9 +35,68 @@ import {
   populateSettingsForm, saveSettingsFromForm,
   toggleAutoDelayVisibility
 } from "./settingsUI.js";
-import { showScreen, showToast, keyListenerActiveQuiz } from "./utils.js";
+import { showScreen, showToast } from "./utils.js";
+import { saveSettings, safeLoadQuizzes, loadGenreOrder, saveGenreOrder, saveQuizzes } from "./storage.js";
+import { loadMode } from "./modes/registry.js";
+import multipleUI from "./modes/multiple/ui.js";
+import flashUI from "./modes/flashcards/ui.js";
 
-/* クイズ開始用ラッパ */
+/* モード表示更新 */
+function updateModeButtonsUI() {
+  if (!els.modeSingleBtn) return;
+  const mode = state.appMode || "single";
+  els.modeSingleBtn.classList.toggle("active", mode === "single");
+  els.modeMultipleBtn.classList.toggle("active", mode === "multiple");
+  els.modeFlashBtn.classList.toggle("active", mode === "flashcards");
+  if(els.currentModeLabel){
+    els.currentModeLabel.textContent =
+      mode === "single" ? "択一" :
+      mode === "multiple" ? "複数選択" :
+      "単語帳";
+  }
+}
+
+async function setAppMode(mode) {
+  if (!mode || mode === state.appMode) {
+    updateModeButtonsUI();
+    return;
+  }
+  // セッション破棄
+  state.activeSession = null;
+  state.questions = [];
+  state.currentIndex = 0;
+  state.correctCount = 0;
+  state.answered = false;
+
+  // 設定反映
+  state.appMode = mode;
+  state.settings.appMode = mode;
+  saveSettings(state.settings);
+
+  // モードモジュールロード
+  try {
+    state.currentModeModule = await loadMode(mode);
+  } catch (e) {
+    console.error("Failed to load mode module:", e);
+    showToast("モード読み込みに失敗しました");
+    return;
+  }
+
+  // データ再読込
+  state.quizzes = safeLoadQuizzes(mode);
+  state.genreOrder = loadGenreOrder(mode);
+  state.currentGenre = null;
+  state.selectedQuestionIds.clear();
+  state.tagFilter = "";
+
+  rebuildGenreButtons();
+  rebuildManageList();
+  showScreen("genreSelect");
+  updateModeButtonsUI();
+  showToast(`モードを「${els.currentModeLabel?.textContent || mode}」に切り替えました`);
+}
+
+/* クイズ開始ラッパ */
 function startQuizNormal(g,limit){
   if(startQuizMode(g,{limit,lowAccuracy:false})){
     showScreen("quizScreen");
@@ -51,32 +110,105 @@ function startQuizLowAcc(g,limit){
   }
 }
 function startQuizFlaggedOnly(g){
-  if(startQuizMode(g,{flaggedOnly:true})){ 
+  if(startQuizMode(g,{flaggedOnly:true})){
     showScreen("quizScreen");
     renderQuestion();
   }
 }
 
 export function bindEvents(){
-  /* ==== 回答画面 ==== */
-  els.iDontKnowBtn?.addEventListener("click", handleDontKnow);
-  window.addEventListener("keydown", e=>{
-    keyListenerActiveQuiz(e,{
-      onNext: nextQuestionManual,
-      onAnswer: handleAnswer,
-      onDontKnow: handleDontKnow
-    });
-  });
-  els.nextQuestionBtn?.addEventListener("click", nextQuestionManual);
+  /* モード切替 */
+  els.modeSingleBtn?.addEventListener("click", ()=>setAppMode("single"));
+  els.modeMultipleBtn?.addEventListener("click", ()=>setAppMode("multiple"));
+  els.modeFlashBtn?.addEventListener("click", ()=>setAppMode("flashcards"));
+  updateModeButtonsUI();
 
+  /* キーボード */
+  window.addEventListener("keydown", e=>{
+    const session = state.activeSession;
+    if(session?.mode === "multiple"){
+      // Enter/Space: 未確定なら採点、確定済みなら次へ
+      if(e.key==="Enter" || e.key===" "){
+        if(!state.answered){
+          multipleUI.submitMultipleAnswer(session);
+        } else {
+          multipleUI.nextMultiple(session);
+        }
+        return;
+      }
+      // 数字キー: トグルのみ
+      if(/^[1-9]$/.test(e.key)){
+        const idx = +e.key - 1;
+        const cb = els.choicesContainer?.querySelector(`.choice[data-index='${idx}'] input[type=checkbox]`);
+        if(cb){
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event("change",{bubbles:true}));
+        }
+        return;
+      }
+      return;
+    }
+    if(session?.mode === "flashcards"){
+      if(e.key==="Enter" || e.key===" "){
+        flashUI.nextFlashcard(session);
+        return;
+      }
+      return;
+    }
+    // single
+    if(state.answered && state.settings.progressMode==="manual" && (e.key==="Enter"||e.key===" ")){
+      nextQuestionManual();
+      return;
+    }
+    if(state.answered) return;
+    if(/^[1-9]$/.test(e.key)){
+      const n=+e.key;
+      const choices=[...els.choicesContainer.querySelectorAll(".choice")];
+      if(n>=1 && n<=choices.length) handleAnswer(n-1);
+    } else if(e.key==="0"){
+      handleDontKnow();
+    }
+  });
+
+  /* わからない */
+  els.iDontKnowBtn?.addEventListener("click", ()=>{
+    const session=state.activeSession;
+    if(session?.mode==="multiple"){
+      multipleUI.submitMultipleAnswer(session,{forcedDontKnow:true});
+      return;
+    }
+    if(session?.mode==="flashcards"){
+      flashUI.nextFlashcard(session);
+      return;
+    }
+    handleDontKnow();
+  });
+
+  /* 次へ */
+  els.nextQuestionBtn?.addEventListener("click", ()=>{
+    const session=state.activeSession;
+    if(session?.mode==="multiple"){
+      multipleUI.nextMultiple(session);
+      return;
+    }
+    if(session?.mode==="flashcards"){
+      flashUI.nextFlashcard(session);
+      return;
+    }
+    nextQuestionManual();
+  });
+
+  /* フラグ切替 */
   els.flagToggleBtn?.addEventListener("click", ()=>{
     const q = state.questions[state.currentIndex];
     if(!q) return;
     const newState = toggleFlag(state.currentGenre,q.id);
     updateFlagButtonForCurrent();
+    saveQuizzes(state.appMode);
     showToast(newState? "要チェックに追加":"要チェックを解除");
   });
 
+  /* 出題率調整 */
   els.priorityUpBtn?.addEventListener("click", ()=>{
     const m=state.settings.priorityIncreaseMultiplier || 1.4;
     adjustPriorityFactor(m);
@@ -86,45 +218,7 @@ export function bindEvents(){
     adjustPriorityFactor(1/m);
   });
 
-  // --- スワイプ操作: 回答後に右->左スワイプで次の問題へ進む ---
-  (function setupTouchSwipe(){
-    try{
-      let touchStartX = 0;
-      let touchStartY = 0;
-      let touching = false;
-      const SWIPE_THRESHOLD = 40;
-      const SWIPE_MAX_Y_DELTA = 80;
-
-      function onTouchStart(e){
-        if(!e.touches || e.touches.length !== 1) return;
-        const t = e.touches[0];
-        touchStartX = t.clientX;
-        touchStartY = t.clientY;
-        touching = true;
-      }
-      function onTouchEnd(e){
-        if(!touching) return;
-        touching = false;
-        const t = (e.changedTouches && e.changedTouches[0]) || null;
-        if(!t) return;
-        const dx = t.clientX - touchStartX;
-        const dy = t.clientY - touchStartY;
-        if(Math.abs(dy) > SWIPE_MAX_Y_DELTA) return;
-        if(dx < -SWIPE_THRESHOLD){
-          if(state.answered){
-            nextQuestionManual();
-          }
-        }
-      }
-
-      els.quizScreen?.addEventListener('touchstart', onTouchStart, { passive: true });
-      els.quizScreen?.addEventListener('touchend', onTouchEnd, { passive: true });
-    }catch(err){
-      console.error('setupTouchSwipe failed', err);
-    }
-  })();
-
-  /* ==== 問題数選択画面（委譲） ==== */
+  /* 問題数選択画面 */
   if(els.qCountButtons){
     els.qCountButtons.addEventListener("click", e=>{
       const btn=e.target.closest("button");
@@ -134,7 +228,7 @@ export function bindEvents(){
       const count=btn.dataset.count;
       if(!genre || !mode) return;
       let limit=null;
-      if(count && count!="all"){
+      if(count && count!=="all"){
         const n=parseInt(count,10);
         if(!isNaN(n)&&n>0) limit=n;
       }
@@ -146,7 +240,7 @@ export function bindEvents(){
     });
   }
 
-  /* ==== ジャンル / トップ ==== */
+  /* ジャンル追加 */
   els.addGenreBtn?.addEventListener("click", ()=>{
     const name=prompt("新しいジャンル名:");
     if(!name) return;
@@ -155,11 +249,13 @@ export function bindEvents(){
     if(state.quizzes[g]){ alert("既に存在します"); return; }
     state.quizzes[g]=[];
     state.genreOrder.push(g);
+    saveGenreOrder(state.genreOrder,state.appMode);
+    saveQuizzes(state.appMode);
     rebuildGenreButtons();
     showToast(`ジャンル「${g}」追加`);
   });
 
-  // ホームの「問題管理」ボタンはUIから削除済みなので、null安全に
+  /* 管理画面遷移 */
   els.manageBtn?.addEventListener("click", ()=>{
     if(!state.currentGenre){
       const first=state.genreOrder[0];
@@ -171,7 +267,7 @@ export function bindEvents(){
 
   els.genreManageBtn?.addEventListener("click", ()=>showGenreManage());
 
-  /* ==== 戻り/再挑戦 ==== */
+  /* 戻り/再挑戦 */
   els.qCountCancelBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
   els.backBtn?.addEventListener("click", ()=>{
     if(confirm("進行中のクイズを終了しますか？")) showScreen("genreSelect");
@@ -190,7 +286,7 @@ export function bindEvents(){
     else showQuestionCountScreen(state.currentGenre);
   });
 
-  /* ==== 結果画面 フラグ ==== */
+  /* 結果画面 フラグ操作 */
   els.wrongList?.addEventListener("click", e=>{
     const btn=e.target.closest(".flag-btn");
     if(!btn) return;
@@ -198,6 +294,7 @@ export function bindEvents(){
     const newState=toggleFlag(state.currentGenre,id);
     btn.classList.toggle("active",newState);
     btn.textContent=newState?"★ 要チェック":"☆ 要チェック";
+    saveQuizzes(state.appMode);
   });
   els.rightList?.addEventListener("click", e=>{
     const btn=e.target.closest(".flag-btn");
@@ -206,8 +303,9 @@ export function bindEvents(){
     const newState=toggleFlag(state.currentGenre,id);
     btn.classList.toggle("active",newState);
     btn.textContent=newState?"★ 要チェック":"☆ 要チェック";
+    saveQuizzes(state.appMode);
   });
-  // 結果画面 -> 問題管理へ（UI廃止済み。null安全にしておく）
+
   els.manageFromResultBtn?.addEventListener("click", ()=>{
     if(!state.currentGenre){
       showToast("現在のジャンルが特定できません");
@@ -217,10 +315,9 @@ export function bindEvents(){
     showManageScreen(state.currentGenre);
   });
 
-  /* ==== 管理画面: 一覧操作 ==== */
+  /* 管理画面操作 */
   els.manageListWrap?.addEventListener("click", onManageListClick);
   els.manageListWrap?.addEventListener("change", handleManageCheckboxChange);
-
   els.selectAllBtn?.addEventListener("click", ()=>{
     const cbs=els.manageListWrap.querySelectorAll(".q-select");
     cbs.forEach(cb=>{
@@ -239,43 +336,16 @@ export function bindEvents(){
   els.bulkDeleteBtn?.addEventListener("click", doBulkDelete);
   els.bulkTagApplyBtn?.addEventListener("click", ()=>applyBulkTag());
   els.bulkTagInput?.addEventListener("input", ()=>updateBulkUI());
-
   els.sortSelect?.addEventListener("change", ()=>{
     state.sortMode = els.sortSelect.value;
     rebuildManageList();
   });
-
-  // 検索は入力のたびに自動適用
   els.tagFilterInput?.addEventListener("input", ()=>{
     state.tagFilter = els.tagFilterInput.value.trim();
     rebuildManageList();
   });
 
-  // 既存のフィルタボタン/Enterキー適用は廃止
-  // els.applyFilterBtn?.addEventListener("click", ...)
-  // els.clearFilterBtn?.addEventListener("click", ...)
-  // els.tagFilterInput?.addEventListener("keydown", ...)
-
-  els.flaggedFilterBtn?.addEventListener("click", ()=>{
-    state.manageFlaggedOnly=!state.manageFlaggedOnly;
-    if(state.manageFlaggedOnly){
-      els.flaggedFilterBtn.classList.add("active");
-      els.flaggedFilterBtn.textContent="★ 要チェックのみ";
-    } else {
-      els.flaggedFilterBtn.classList.remove("active");
-      els.flaggedFilterBtn.textContent="☆ 要チェックのみ";
-    }
-    rebuildManageList();
-    updateBulkUI();
-  });
-
-  els.resetStatsBtn?.addEventListener("click", resetGenreStats);
-  els.manageAddBtn?.addEventListener("click", ()=>{
-    const g = state.currentGenre || state.genreOrder[0] || "";
-    showAddScreen(g);
-  });
-  els.manageBackBtn2?.addEventListener("click", ()=>showScreen("genreSelect"));
-
+  /* ジャンルフィルタ */
   els.genreFilterSelect?.addEventListener("change", ()=>{
     const val=els.genreFilterSelect.value;
     if(val==="__ALL__"){
@@ -289,6 +359,7 @@ export function bindEvents(){
     updateBulkUI();
   });
 
+  /* エクスポート / インポート */
   els.genreExportBtn?.addEventListener("click", exportCurrentGenre);
   els.genreImportBtn?.addEventListener("click", ()=>{
     const val=els.genreFilterSelect ? els.genreFilterSelect.value : state.currentGenre;
@@ -303,7 +374,7 @@ export function bindEvents(){
     e.target.value="";
   });
 
-  /* ==== ジャンル管理画面 ==== */
+  /* ジャンル管理画面 */
   els.genreManageList?.addEventListener("click", e=>{
     const btn=e.target.closest("button[data-act]");
     if(!btn) return;
@@ -317,10 +388,8 @@ export function bindEvents(){
       case "rename": renameGenre(g); break;
     }
   });
-  els.genreManageBackBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
 
-  /* ==== 追加画面 ==== */
-  // ホームからの addQuestionBtn は削除済み。以下は管理画面などからの導線のみ有効。
+  /* 追加/編集画面 */
   els.addQuestionBtn?.addEventListener("click", ()=>{
     const g = state.currentGenre || state.genreOrder[0] || "";
     showAddScreen(g);
@@ -337,7 +406,6 @@ export function bindEvents(){
   });
   els.saveEditBtn?.addEventListener("click", ()=>handleSaveEdit());
   els.cancelEditBtn?.addEventListener("click", ()=>cancelEdit());
-  // 追加/編集画面: 編集中に管理一覧へ戻る
   els.backToManageBtn?.addEventListener("click", ()=>{
     if(state.currentGenre){
       showManageScreen(state.currentGenre);
@@ -345,10 +413,11 @@ export function bindEvents(){
       showScreen("genreSelect");
     }
   });
-  /* ==== 全データリセット ==== */
+
+  /* 全データリセット */
   els.resetAllDataBtn?.addEventListener("click", ()=>resetAllData());
 
-  /* ==== 設定画面 ==== */
+  /* 設定 */
   els.settingsBtn?.addEventListener("click", ()=>{
     populateSettingsForm();
     showScreen("settingsScreen");
@@ -364,5 +433,4 @@ export function bindEvents(){
   els.cancelSettingsBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
 }
 
-/* 外部公開（他で再利用する開始関数） */
 export { startQuizNormal, startQuizLowAcc, startQuizFlaggedOnly };

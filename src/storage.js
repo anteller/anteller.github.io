@@ -1,12 +1,18 @@
 import {
   STORAGE_KEY, SETTINGS_KEY, GENRE_ORDER_KEY,
-  DATA_VERSION, DEFAULT_SETTINGS
+  DATA_VERSION, DEFAULT_SETTINGS,
+  STORAGE_KEY_SINGLE, STORAGE_KEY_MULTIPLE, STORAGE_KEY_FLASH,
+  APP_MODES,
+  GENRE_ORDER_KEY_SINGLE, GENRE_ORDER_KEY_MULTIPLE, GENRE_ORDER_KEY_FLASH
 } from "./constants.js";
 import { state } from "./state.js";
 import { normalizeQuestion } from "./normalize.js";
 import { clone } from "./utils.js";
 import { defaultQuizzes } from "./defaultQuizzes.js";
 
+/**
+ * 既存の migrateQuizzes を保持（内部データ正規化）
+ */
 export function migrateQuizzes(data){
   if(!data.__version) data.__version=1;
   Object.keys(data).forEach(k=>{
@@ -17,25 +23,90 @@ export function migrateQuizzes(data){
   return data;
 }
 
-export function safeLoadQuizzes(){
+/* ---------- モード対応ヘルパ ---------- */
+
+/* モードに対応した quizzes の localStorage キーを返す（既定: single） */
+function keyForMode(mode) {
+  const m = mode || (state.settings && state.settings.appMode) || APP_MODES.SINGLE;
+  switch (m) {
+    case APP_MODES.MULTIPLE: return STORAGE_KEY_MULTIPLE;
+    case APP_MODES.FLASHCARDS: return STORAGE_KEY_FLASH;
+    case APP_MODES.SINGLE:
+    default: return STORAGE_KEY_SINGLE;
+  }
+}
+
+/* モードに対応した genreOrder の localStorage キーを返す（既定: single） */
+function keyForGenreOrder(mode){
+  const m = mode || (state.settings && state.settings.appMode) || APP_MODES.SINGLE;
+  switch(m){
+    case APP_MODES.MULTIPLE: return GENRE_ORDER_KEY_MULTIPLE;
+    case APP_MODES.FLASHCARDS: return GENRE_ORDER_KEY_FLASH;
+    case APP_MODES.SINGLE:
+    default: return GENRE_ORDER_KEY_SINGLE;
+  }
+}
+
+/**
+ * safeLoadQuizzes(mode?)
+ * - 互換性: 引数を省略した呼び出しは既存コードと整合するように動作します。
+ * - mode を渡すとそのモード用キーから読み込みます。
+ */
+export function safeLoadQuizzes(mode){
   try{
-    const raw=localStorage.getItem(STORAGE_KEY);
-    if(!raw) return migrateQuizzes(clone(defaultQuizzes));
-    const parsed=JSON.parse(raw);
-    if(!parsed.__version || parsed.__version<DATA_VERSION) return migrateQuizzes(parsed);
+    const key = keyForMode(mode);
+    const raw = localStorage.getItem(key);
+
+    if(!raw){
+      // もし新しいキーにデータがなければ、既存の旧キー(STORAGE_KEY)をフォールバックで読む（初回移行を楽にする）
+      if(key !== STORAGE_KEY && localStorage.getItem(STORAGE_KEY)){
+        const legacyRaw = localStorage.getItem(STORAGE_KEY);
+        if(legacyRaw){
+          try{
+            const parsedLegacy = JSON.parse(legacyRaw);
+            const migrated = migrateQuizzes(parsedLegacy);
+            // コピーしておく（非破壊、旧キーは残す）
+            try{ localStorage.setItem(key, JSON.stringify(migrated)); }catch(e){}
+            return migrated;
+          }catch(e){
+            // ignore parse error
+          }
+        }
+      }
+      // デフォルトを返す（既存の挙動を維持）
+      return migrateQuizzes(clone(defaultQuizzes));
+    }
+
+    const parsed = JSON.parse(raw);
+    if(!parsed.__version || parsed.__version < DATA_VERSION) return migrateQuizzes(parsed);
     Object.keys(parsed).forEach(k=>{
       if(k.startsWith("__")) return;
-      parsed[k]=parsed[k].map(normalizeQuestion);
+      parsed[k] = parsed[k].map(normalizeQuestion);
     });
     return parsed;
-  }catch{
+  }catch(err){
+    console.error("safeLoadQuizzes error", err);
     return migrateQuizzes(clone(defaultQuizzes));
   }
 }
 
-export function saveQuizzes(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.quizzes)); }catch{}
+/**
+ * saveQuizzes([mode])
+ * - mode を渡せばモード別キーへ保存できる。引数省略時は現在の state.settings.appMode を使う。
+ */
+export function saveQuizzes(mode){
+  try{
+    const key = keyForMode(mode || state.settings?.appMode);
+    localStorage.setItem(key, JSON.stringify(state.quizzes));
+  }catch(err){
+    console.error("saveQuizzes failed", err);
+  }
 }
+
+/* 既存互換ラッパ（旧挙動を想定する呼び出し） */
+export function safeLoadQuizzesLegacy(){ return safeLoadQuizzes(APP_MODES.SINGLE); }
+
+/* ---------- 設定 / ジャンル順序（モード対応） ---------- */
 
 export function loadSettings(){
   try{
@@ -66,31 +137,51 @@ export function saveSettings(){
   try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings)); }catch{}
 }
 
-export function loadGenreOrder(){
+/* loadGenreOrder(mode) : モード別に保存された genreOrder を読み込む
+   - フォールバック: 新キーが無ければ legacy GENRE_ORDER_KEY を使って single にコピーする
+*/
+export function loadGenreOrder(mode){
   try{
-    const raw=localStorage.getItem(GENRE_ORDER_KEY);
+    const key = keyForGenreOrder(mode);
+    const raw = localStorage.getItem(key);
     if(!raw){
-      state.genreOrder=Object.keys(state.quizzes).filter(k=>!k.startsWith("__"));
-      return;
+      // フォールバック: 旧の global GENRE_ORDER_KEY を読む（初回移行用）
+      const legacy = localStorage.getItem(GENRE_ORDER_KEY);
+      if(legacy){
+        try{
+          const arr=JSON.parse(legacy);
+          if(Array.isArray(arr)){
+            // コピーしておく
+            try{ localStorage.setItem(key, legacy); }catch(e){}
+            return arr.filter(g=>!!g);
+          }
+        }catch(e){}
+      }
+      // デフォルト: quizzes のキーから作る
+      return Object.keys(state.quizzes).filter(k=>!k.startsWith("__"));
     }
-    const arr=JSON.parse(raw);
-    if(!Array.isArray(arr)){
-      state.genreOrder=Object.keys(state.quizzes).filter(k=>!k.startsWith("__"));
-      return;
-    }
+    const arr = JSON.parse(raw);
+    if(!Array.isArray(arr)) return Object.keys(state.quizzes).filter(k=>!k.startsWith("__"));
     const set=new Set(Object.keys(state.quizzes).filter(k=>!k.startsWith("__")));
     const filtered=arr.filter(g=>set.has(g));
     const leftovers=[...set].filter(g=>!filtered.includes(g));
-    state.genreOrder=[...filtered,...leftovers];
-  }catch{
-    state.genreOrder=Object.keys(state.quizzes).filter(k=>!k.startsWith("__"));
+    return [...filtered,...leftovers];
+  }catch(err){
+    console.error("loadGenreOrder failed", err);
+    return Object.keys(state.quizzes).filter(k=>!k.startsWith("__"));
   }
 }
 
-export function saveGenreOrder(){
-  try{ localStorage.setItem(GENRE_ORDER_KEY, JSON.stringify(state.genreOrder)); }catch{}
+export function saveGenreOrder(order, mode){
+  try{
+    const key = keyForGenreOrder(mode || state.settings?.appMode);
+    localStorage.setItem(key, JSON.stringify(order));
+  }catch(err){
+    console.error("saveGenreOrder failed", err);
+  }
 }
 
+/* ---------- 既存のユーティリティ関数をそのまま保持 ---------- */
 export function normalizeQuestionCountOptions(raw){
   if(!raw) return ["5","10","all"];
   let arr=Array.isArray(raw)? raw : String(raw).split(",");
@@ -112,3 +203,33 @@ export function normalizeQuestionCountOptions(raw){
   }
   return result.sort((a,b)=>parseInt(a)-parseInt(b));
 }
+
+/* ---------- マイグレーション補助（旧キー -> 新 single キーへコピー） ---------- */
+/**
+ * 旧 STORAGE_KEY にデータがあり、かつ新キー(STORAGE_KEY_SINGLE) にデータが無ければ
+ * コピーを行う（非破壊）。既に新キーがある場合は何もしない。
+ */
+export function migrateIfNeeded(){
+  try{
+    const hasNew = localStorage.getItem(STORAGE_KEY_SINGLE);
+    if(hasNew) return { migrated: false, reason: "already_has_new_key" };
+    const oldRaw = localStorage.getItem(STORAGE_KEY);
+    if(!oldRaw) return { migrated: false, reason: "no_old_key" };
+    localStorage.setItem(STORAGE_KEY_SINGLE, oldRaw);
+    // 同時にジャンル順序の legacy キーがあれば single 用にコピーしておく
+    try{
+      const legacyGenre = localStorage.getItem(GENRE_ORDER_KEY);
+      if(legacyGenre && !localStorage.getItem(GENRE_ORDER_KEY_SINGLE)){
+        localStorage.setItem(GENRE_ORDER_KEY_SINGLE, legacyGenre);
+      }
+    }catch(e){}
+    console.info("migrateIfNeeded: copied quizzes -> quizzes_single");
+    return { migrated: true };
+  }catch(err){
+    console.error("migrateIfNeeded failed", err);
+    return { migrated: false, error: err };
+  }
+}
+
+/* エクスポートの互換名（既存コード互換を助ける） */
+export { safeLoadQuizzes as safeLoadQuizzes_old };

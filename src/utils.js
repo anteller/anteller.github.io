@@ -21,6 +21,10 @@ export function showScreen(name){
   Object.keys(screenMap).forEach(k=>{
     screenMap[k]?.classList.toggle("hidden", k!==name);
   });
+  // ホーム(genreSelect)以外ではモード切替ボタンを非表示
+  if (els.modeToggle) {
+    els.modeToggle.classList.toggle("hidden", name!=="genreSelect");
+  }
 }
 
 export function shuffle(a){
