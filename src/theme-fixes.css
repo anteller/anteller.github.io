@@ -1,6 +1,115 @@
-/* 追加の見た目修正（全モード共通の軽微なUIバグ修正） */
+/* =========================================================
+   共通テーマ調整（コントラスト改善版）
+   ========================================================= */
 
-/* 1) ジャンル選択のボタン横の三点メニューの垂直ずれ修正 */
+/* ベース変数（ライト） */
+:root {
+  --c-primary: #2563eb;           /* blue-600 */
+  --c-primary-hover: #1d4ed8;     /* blue-700 */
+  --c-primary-ghost: rgba(37,99,235,0.10);
+  --c-primary-ghost-hover: rgba(37,99,235,0.16);
+
+  --c-surface: #ffffff;
+  --c-surface-alt: #f8fafc;       /* tailwind slate-50 */
+  --c-surface-border: #d6d9de;
+
+  --c-text: #0f172a;              /* slate-900 */
+  --c-text-sub: #374151;          /* slate-700 より少し濃く */
+  --c-text-faint: #475569;        /* 旧 sub 用（ごく補助的） */
+  --c-text-invert: #ffffff;
+
+  --c-ok: #16a34a;
+  --c-warn: #dc2626;
+  --c-warn-bg: rgba(220,38,38,0.12);
+  --c-ok-bg: rgba(22,163,74,0.14);
+
+  --c-focus-ring: #93c5fd;
+  --c-shadow: rgba(15,23,42,0.06);
+
+  --c-badge-bg: #eff6ff;
+  --c-badge-border: #bfdbfe;
+
+  --c-radius-sm: 4px;
+  --c-radius-md: 8px;
+  --c-radius-lg: 12px;
+
+  --c-font-small: 12px;
+}
+
+/* ベース変数（ダーク） */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --c-primary: #3b82f6;            /* blue-500 */
+    --c-primary-hover: #2563eb;
+    --c-primary-ghost: rgba(59,130,246,0.16);
+    --c-primary-ghost-hover: rgba(59,130,246,0.24);
+
+    --c-surface: #0f172a;            /* slate-900 */
+    --c-surface-alt: #1e293b;        /* slate-800 */
+    --c-surface-border: #334155;
+
+    --c-text: #f1f5f9;               /* slate-50 */
+    --c-text-sub: #cbd5e1;           /* slate-300 */
+    --c-text-faint: #94a3b8;         /* slate-400 */
+    --c-text-invert: #ffffff;
+
+    --c-ok: #22c55e;
+    --c-warn: #f87171;
+    --c-warn-bg: rgba(248,113,113,0.18);
+    --c-ok-bg: rgba(34,197,94,0.20);
+
+    --c-focus-ring: #60a5fa;
+    --c-shadow: rgba(0,0,0,0.35);
+
+    --c-badge-bg: #1e3a8a;
+    --c-badge-border: #3b82f6;
+  }
+}
+
+/* 文字基本 */
+body, body * {
+  font-smooth: always;
+}
+
+body {
+  color: var(--c-text);
+  background: var(--c-surface);
+}
+
+/* 見出し */
+h1, h2, h3 {
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+/* サブテキスト強化 */
+p, .result-sub, .explanation, .bulk-info, .priority-indicator {
+  color: var(--c-text-sub);
+}
+
+/* 極めて補助的（以前 opacity で薄くしていた部分用） */
+.faint, .label, .genre-count {
+  color: var(--c-text-faint);
+}
+
+/* モードトグル */
+.mode-toggle .mode-btn {
+  color: var(--c-text);
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-surface-border);
+  font-weight: 500;
+}
+.mode-toggle .mode-btn.active {
+  background: var(--c-primary);
+  color: var(--c-text-invert);
+  border-color: var(--c-primary-hover);
+  box-shadow: 0 0 0 3px var(--c-primary-ghost);
+}
+.mode-toggle .mode-btn:hover {
+  background: var(--c-primary-ghost);
+}
+
+/* ジャンルボタン & 三点メニューの縦位置揃え */
 #genreButtons,
 .genre-list,
 .genre-item,
@@ -8,17 +117,29 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 #genreButtons .genre-btn,
 .genre-item .genre-btn {
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
+  padding: 6px 14px;
+  border: 1px solid var(--c-surface-border);
+  background: var(--c-surface-alt);
+  border-radius: var(--c-radius-md);
+  color: var(--c-text);
+  font-weight: 500;
+  box-shadow: 0 1px 2px var(--c-shadow);
+  transition: background .15s, border-color .15s;
+}
+#genreButtons .genre-btn:hover {
+  background: var(--c-primary-ghost);
+  border-color: var(--c-primary-hover);
 }
 #genreButtons .genre-more-btn,
-.genre-item .genre-more-btn,
 #genreButtons .genre-more,
-.genre-item .genre-more {
+.genre-item .genre-more-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -27,47 +148,191 @@
   height: 28px;
   border-radius: 50%;
   padding: 0;
-}
-
-/* 2) ライトモードで出題モード（択一 等）が黒くなる問題の緩和 */
-.mode-toggle .mode-btn {
-  color: var(--c-text, #111827);
-}
-.mode-toggle .mode-btn.active {
-  background: var(--c-primary, #2563eb);
-  color: #fff;
-}
-
-/* 3) 三点マークにホバーした際に隣のジャンルボタンが青くなる問題の回避
-   - 親:hover で genre-btn に色が入るのを避け、要素自身の :hover のみに限定 */
-#genreButtons .genre-btn:hover {
-  background: var(--c-primary-ghost, rgba(37, 99, 235, 0.08));
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-surface-border);
+  cursor: pointer;
+  box-shadow: 0 1px 2px var(--c-shadow);
+  transition: background .15s, border-color .15s;
 }
 #genreButtons .genre-more-btn:hover,
 #genreButtons .genre-more:hover {
-  background: var(--c-primary-ghost, rgba(37, 99, 235, 0.12));
+  background: var(--c-primary-ghost-hover);
+  border-color: var(--c-primary-hover);
 }
+
+/* 親要素 :hover 時に子の genre-btn が強制青化される副作用を防止 */
 #genreButtons .genre-item:hover .genre-btn {
-  background: initial; /* 親hoverの連鎖で色が入るのを抑制 */
+  background: var(--c-surface-alt);
+  border-color: var(--c-surface-border);
 }
 
-/* 4) choice 行のバッジ色（①等）を青に */
+/* 選択肢行（複数選択モード含む） */
+.choice {
+  color: var(--c-text);
+  background: var(--c-surface-alt);
+  border: 2px solid var(--c-primary);
+  border-radius: var(--c-radius-lg);
+  transition: background .12s, border-color .12s;
+}
+.choice:hover {
+  background: var(--c-primary-ghost);
+  border-color: var(--c-primary-hover);
+}
+
+/* ①などのバッジ */
 .choice .badge {
-  color: var(--c-primary, #2563eb);
+  color: var(--c-primary);
+  font-weight: 600;
+  min-width: 22px;
+  text-align: center;
 }
 
-/* 5) ライト/ダークのボーダーとサーフェス色のフォールバック */
-:root {
-  --c-primary: #2563eb;        /* blue-600 */
-  --c-primary-ghost: rgba(37,99,235,0.08);
-  --c-surface: #fff;
-  --c-text: #111827;
-  --c-text-sub: #475569;
+/* 正解/不正解ハイライト（複数選択確定後用） */
+.choice.correct {
+  background: var(--c-ok-bg) !important;
+  border-color: var(--c-ok) !important;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --c-surface: #0b0f16;
-    --c-text: #e5e7eb;
-    --c-text-sub: #94a3b8;
-  }
+.choice.wrong {
+  background: var(--c-warn-bg) !important;
+  border-color: var(--c-warn) !important;
+}
+
+/* 結果文字 */
+.result-msg {
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 8px;
+  color: var(--c-text);
+}
+.result-sub {
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* 解説 */
+.explanation {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-surface-border);
+  border-radius: var(--c-radius-md);
+  color: var(--c-text);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+/* バッジ類 */
+.badge-inline {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 11px;
+  background: var(--c-badge-bg);
+  color: var(--c-text-sub);
+  border: 1px solid var(--c-badge-border);
+  border-radius: var(--c-radius-sm);
+  margin-right: 4px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+/* タグバッジ（動的生成対象） */
+.tag-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--c-primary-ghost);
+  color: var(--c-primary-hover);
+  border-radius: var(--c-radius-sm);
+  font-size: 11px;
+  margin: 0 3px 3px 0;
+}
+
+/* ボタンの基本強調 */
+.btn {
+  font-weight: 500;
+}
+
+/* 次へボタン / 警告 / 二次ボタンなど既存クラスを強調（必要に応じ調整可能） */
+.btn.secondary {
+  background: var(--c-primary);
+  color: var(--c-text-invert);
+  border: 1px solid var(--c-primary-hover);
+}
+.btn.secondary:hover {
+  background: var(--c-primary-hover);
+}
+.btn.warn {
+  background: #f59e0b;
+  color: #fff;
+  border: 1px solid #d97706;
+}
+.btn.warn:hover {
+  background: #d97706;
+}
+.btn.danger {
+  background: #dc2626;
+  color: #fff;
+  border: 1px solid #b91c1c;
+}
+.btn.danger:hover {
+  background: #b91c1c;
+}
+
+/* フラットボタン */
+.btn.flat {
+  background: transparent;
+  border: 1px solid var(--c-surface-border);
+  color: var(--c-text);
+}
+.btn.flat:hover {
+  background: var(--c-primary-ghost);
+  border-color: var(--c-primary-hover);
+}
+
+/* 出題率調整ラッパ */
+#priorityAdjustWrap {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.priority-indicator {
+  font-weight: 600;
+  color: var(--c-text-sub);
+  padding: 2px 6px;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-surface-border);
+  border-radius: var(--c-radius-sm);
+}
+
+/* フォーカスリング（アクセシビリティ） */
+.choice:focus,
+.btn:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 3px solid var(--c-focus-ring);
+  outline-offset: 2px;
+}
+
+/* トースト（必要なら調整） */
+.toast {
+  color: var(--c-text);
+}
+
+/* 管理画面リストのサブ情報 */
+.question-item .q-meta,
+.question-item .q-actions {
+  font-size: 12px;
+  color: var(--c-text-sub);
+}
+
+/* 小さな説明文 */
+.label,
+.exp {
+  font-size: 12px;
+}
+
+/* 過度な opacity 指定の排除（以前文字が薄くなった原因） */
+.choice[style*="opacity"] {
+  opacity: 1 !important;
 }
