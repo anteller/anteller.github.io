@@ -4,7 +4,7 @@ import multipleEngine from "./engine.js";
 import { saveQuizzes } from "../../storage.js";
 import { state } from "../../state.js";
 
-// 正解インデックス取得（single互換）
+// 正解インデックス取得（single互換フォールバック）
 function getCorrectIndexes(q){
   if(Array.isArray(q.correctIndexes)) return q.correctIndexes;
   return Number.isInteger(q.answer) ? [q.answer] : [];
@@ -22,27 +22,6 @@ function disableIDontKnow(){
   }
 }
 
-// ①②…（1〜20まで対応）
-function circledNum(n){
-  const map = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳".split("");
-  return (n>=1 && n<=20)? map[n-1] : String(n);
-}
-
-// 低正答率UI（出題率ボタン）を表示/更新
-function updatePriorityAdjustUIForMultiple(){
-  if(!els.priorityAdjustWrap) return;
-  const lowMode=!!state.lastSession?.lowAccuracy;
-  if(!lowMode || state.currentIndex>=state.questions.length){
-    els.priorityAdjustWrap.classList.add("hidden");
-    return;
-  }
-  const currentQ=state.questions[state.currentIndex];
-  const orig=state.quizzes[state.currentGenre]?.find(q=>q.id===currentQ.id);
-  const pf=orig?.priorityFactor ?? 1;
-  if(els.priorityIndicator) els.priorityIndicator.textContent="x"+pf.toFixed(2);
-  els.priorityAdjustWrap.classList.remove("hidden");
-}
-
 function buildChoiceRow(text, idx, session){
   const row = document.createElement("div");
   row.className = "choice";
@@ -50,26 +29,18 @@ function buildChoiceRow(text, idx, session){
   row.style.display = "flex";
   row.style.alignItems = "center";
   row.style.gap = "10px";
-  row.style.padding = "10px 12px";
-  // 青枠（ライト/ダーク両対応のフォールバック）
-  row.style.border = "2px solid var(--c-primary, #2563eb)";
-  row.style.borderRadius = "12px";
-  row.style.margin = "8px 0";
+  row.style.padding = "8px 10px";
+  row.style.border = "1px solid var(--c-border, #5552)";
+  row.style.borderRadius = "8px";
+  row.style.margin = "6px 0";
   row.style.cursor = "pointer";
   row.style.userSelect = "none";
-  row.style.background = "var(--c-surface, #fff)";
-
-  // ①バッジ（左上）
-  const badge = document.createElement("span");
-  badge.className = "badge";
-  badge.textContent = circledNum(idx+1);
-  badge.style.fontWeight = "600";
-  badge.style.marginRight = "6px";
+  row.style.background = "var(--c-surface)";
 
   const cb = document.createElement("input");
   cb.type = "checkbox";
   cb.value = String(idx);
-  cb.style.transform = "scale(1.15)";
+  cb.style.transform = "scale(1.2)";
 
   const label = document.createElement("div");
   label.style.flex = "1 1 auto";
@@ -88,7 +59,7 @@ function buildChoiceRow(text, idx, session){
     session.answers[session.currentIndex] = sel;
   });
 
-  row.append(badge, cb, label);
+  row.append(cb, label);
   return row;
 }
 
@@ -96,19 +67,19 @@ export function renderQuestionMultiple(session){
   const q = session.questions[session.currentIndex];
   if(!q) return;
 
-  // 進捗
+  // 進捗表示
   if(els.progress){
     els.progress.textContent = `${session.currentIndex+1} / ${session.questions.length}`;
   }
 
-  // 次へを隠す・未回答フラグ
+  // 「次へ」は回答確定まで隠す、未回答フラグ
   setNextVisible(false);
   state.answered = false;
 
   // 問題文
   if(els.question) els.question.textContent = q.q ?? "";
 
-  // 解説を隠す
+  // 解説を隠す（択一と同じ）
   if(els.explanationBox){
     els.explanationBox.innerHTML = "";
     els.explanationBox.style.display = "none";
@@ -121,7 +92,7 @@ export function renderQuestionMultiple(session){
       els.choicesContainer.appendChild(buildChoiceRow(t,i,session));
     });
 
-    // 回答確定（選択肢の下）
+    // 回答確定ボタン（選択肢の下）
     const submitBtn = document.createElement("button");
     submitBtn.type="button";
     submitBtn.className="btn small";
@@ -130,11 +101,11 @@ export function renderQuestionMultiple(session){
     submitBtn.style.alignSelf="stretch";
     submitBtn.addEventListener("click", ()=>{
       submitMultipleAnswer(session);
-      setNextVisible(true);
     });
     els.choicesContainer.appendChild(submitBtn);
   }
 
+  // 結果表示の初期化（択一準拠）
   if(els.result){
     els.result.textContent="";
     els.result.style.color="inherit";
@@ -147,23 +118,23 @@ export function renderQuestionMultiple(session){
     els.iDontKnowBtn.disabled=false;
     els.iDontKnowBtn.style.opacity="1";
   }
-
-  // 低正答率UI
-  updatePriorityAdjustUIForMultiple();
 }
 
 /**
  * 回答確定
+ * - 正解: 緑、「◯ 正解！」、解説表示
+ * - 不正解: 赤、「✕ 不正解」または「✕ わからない」、解説表示
+ * - 「次へ」ボタン表示（手動）／自動モードなら遅延遷移
  */
 export function submitMultipleAnswer(session, { forcedDontKnow=false } = {}){
   const q = session.questions[session.currentIndex];
   const userSel = session.answers[session.currentIndex] || [];
   const correct = multipleEngine.gradeQuestion(q, userSel);
 
-  // 統計
+  // 統計（singleと同じ場所に保存）
   q.stats = q.stats || { c:0, t:0 };
   q.stats.t += 1;
-  if(correct) q.stats.c += 1;
+  if(correct && !forcedDontKnow) q.stats.c += 1;
 
   saveQuizzes(state.appMode);
 
@@ -177,30 +148,37 @@ export function submitMultipleAnswer(session, { forcedDontKnow=false } = {}){
     const idx = +row.dataset.index;
     const chosen = selected.has(idx);
     const isCorrect = correctSet.has(idx);
-    row.style.opacity = "1";
+    row.style.borderWidth="2px";
     if(isCorrect && chosen){
-      row.style.background="rgba(34,197,94,0.16)";
+      row.style.background="rgba(34,197,94,0.18)";
       row.style.borderColor="rgba(34,197,94,0.9)";
     } else if(!isCorrect && chosen){
-      row.style.background="rgba(239,68,68,0.12)";
+      row.style.background="rgba(239,68,68,0.15)";
       row.style.borderColor="rgba(239,68,68,0.8)";
     } else if(isCorrect && !chosen){
-      row.style.background="var(--c-surface, #fff)";
+      row.style.background="var(--c-surface)";
       row.style.borderColor="rgba(34,197,94,0.8)";
     } else {
-      row.style.opacity=".85";
-      row.style.borderColor="var(--c-primary, #2563eb)";
+      row.style.opacity=".75";
+      row.style.borderColor="var(--c-border,#5552)";
     }
     const cb=row.querySelector("input[type=checkbox]");
     if(cb) cb.disabled=true;
   });
 
   state.answered = true;
+  disableIDontKnow();
 
-  // 結果表示
+  // 結果表示（択一準拠）
   if(els.result){
-    els.result.textContent = correct? "〇 正解！":"✕ 不正解";
-    els.result.style.color = correct? "rgb(34,197,94)" : "rgb(239,68,68)";
+    if(forcedDontKnow){
+      els.result.textContent = "✕ わからない";
+      els.result.style.color = "rgb(239,68,68)";
+    } else {
+      els.result.textContent = correct? "◯ 正解！":"✕ 不正解";
+      els.result.style.color = correct? "rgb(34,197,94)" : "rgb(239,68,68)";
+      if(correct) state.correctCount++;
+    }
   }
 
   if(els.subResult){
@@ -210,21 +188,18 @@ export function submitMultipleAnswer(session, { forcedDontKnow=false } = {}){
     els.subResult.style.color = "var(--c-text-sub)";
   }
 
-  // 解説表示
+  // 解説表示（存在する場合のみ）
   if(q.exp && q.exp.trim()!=="" && els.explanationBox){
     els.explanationBox.style.display="block";
     els.explanationBox.textContent = q.exp.trim();
   }
 
-  // 次へ
+  // 「次へ」表示（手動） or 自動遷移
   setNextVisible(true);
   if(state.settings.progressMode==="auto"){
     const delayMs=Math.max(0, state.settings.autoDelaySeconds*1000);
     setTimeout(()=>{ nextMultiple(session); }, delayMs);
   }
-
-  // 低正答率UI（インジケータ更新）
-  updatePriorityAdjustUIForMultiple();
 }
 
 export function nextMultiple(session){
@@ -236,7 +211,7 @@ export function nextMultiple(session){
     if(els.question) els.question.textContent="終了";
     if(els.choicesContainer) els.choicesContainer.innerHTML="";
     if(els.result){
-      els.result.textContent = `正解数: ${session.correctCount} / ${session.questions.length}`;
+      els.result.textContent = `正解数: ${state.correctCount} / ${session.questions.length}`;
       els.result.style.color="inherit";
     }
     showToast("複数選択モード 終了");
