@@ -255,7 +255,7 @@ export function bindEvents(){
     showToast(`ジャンル「${g}」追加`);
   });
 
-  /* 管理画面遷移/戻る（manageBackBtn と manageBackBtn2 の両方を見る） */
+  /* 管理画面遷移/戻る */
   els.manageBtn?.addEventListener("click", ()=>{
     if(!state.currentGenre){
       const first=state.genreOrder[0];
@@ -264,8 +264,10 @@ export function bindEvents(){
     }
     showManageScreen(state.currentGenre);
   });
-  els.manageBackBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
   els.manageBackBtn2?.addEventListener("click", ()=>showScreen("genreSelect"));
+  // domRefs に未定義でも確実にバインドする保険
+  document.getElementById("manageBackBtn2")?.addEventListener("click", ()=>showScreen("genreSelect"));
+
   els.genreManageBtn?.addEventListener("click", ()=>showGenreManage());
 
   /* 戻り/再挑戦 */

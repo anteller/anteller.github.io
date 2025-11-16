@@ -28,7 +28,7 @@ function circledNum(n){
   return (n>=1 && n<=20)? map[n-1] : String(n);
 }
 
-// 低正答率UI（出題率ボタン）を択一と同等に制御
+// 低正答率UI（出題率ボタン）を表示/更新
 function updatePriorityAdjustUIForMultiple(){
   if(!els.priorityAdjustWrap) return;
   const lowMode=!!state.lastSession?.lowAccuracy;

@@ -1,18 +1,24 @@
 /* 追加の見た目修正（全モード共通の軽微なUIバグ修正） */
 
 /* 1) ジャンル選択のボタン横の三点メニューの垂直ずれ修正 */
-.genre-row,
+#genreButtons,
+.genre-list,
+.genre-item,
 .genre-actions-inline {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
-.genre-btn {
+#genreButtons .genre-btn,
+.genre-item .genre-btn {
   display: inline-flex;
   align-items: center;
+  vertical-align: middle;
 }
-.genre-more-btn, /* 三点マークのボタン想定 */
-.genre-more {
+#genreButtons .genre-more-btn,
+.genre-item .genre-more-btn,
+#genreButtons .genre-more,
+.genre-item .genre-more {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -23,36 +29,45 @@
   padding: 0;
 }
 
-/* 2) ライトモードで出題モードバッジが黒くなる問題の緩和 */
-#currentModeIndicator,
-#currentModeIndicator #currentModeLabel {
-  color: var(--c-text-sub, #475569);
+/* 2) ライトモードで出題モード（択一 等）が黒くなる問題の緩和 */
+.mode-toggle .mode-btn {
+  color: var(--c-text, #111827);
+}
+.mode-toggle .mode-btn.active {
+  background: var(--c-primary, #2563eb);
+  color: #fff;
 }
 
 /* 3) 三点マークにホバーした際に隣のジャンルボタンが青くなる問題の回避
-   - 親要素の :hover 連鎖でボタンに色が入らないように限定セレクタ化 */
-.genre-list .genre-item:hover .genre-more-btn:hover {
-  background: var(--c-primary-ghost, rgba(37, 99, 235, 0.1));
-}
-.genre-list .genre-item .genre-btn:hover {
+   - 親:hover で genre-btn に色が入るのを避け、要素自身の :hover のみに限定 */
+#genreButtons .genre-btn:hover {
   background: var(--c-primary-ghost, rgba(37, 99, 235, 0.08));
 }
+#genreButtons .genre-more-btn:hover,
+#genreButtons .genre-more:hover {
+  background: var(--c-primary-ghost, rgba(37, 99, 235, 0.12));
+}
+#genreButtons .genre-item:hover .genre-btn {
+  background: initial; /* 親hoverの連鎖で色が入るのを抑制 */
+}
 
-/* 4) choice ボタン/行の見栄え（既存に上書きされない程度の穏当な指定） */
+/* 4) choice 行のバッジ色（①等）を青に */
 .choice .badge {
   color: var(--c-primary, #2563eb);
 }
 
-/* 5) ライト/ダークのボーダー色のフォールバック */
+/* 5) ライト/ダークのボーダーとサーフェス色のフォールバック */
 :root {
   --c-primary: #2563eb;        /* blue-600 */
   --c-primary-ghost: rgba(37,99,235,0.08);
   --c-surface: #fff;
+  --c-text: #111827;
   --c-text-sub: #475569;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --c-surface: #0b0f16;
+    --c-text: #e5e7eb;
     --c-text-sub: #94a3b8;
   }
 }

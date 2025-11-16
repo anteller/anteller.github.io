@@ -1,6 +1,4 @@
 // 複数選択モード専用デフォルト問題（サンプル）
-// 必須フィールド: id, q, choices[], correctIndexes[], exp?, tags?, stats?, flagged?, priorityFactor?
-
 export const defaultQuizzesMultiple = {
   "サンプル: 複数選択": [
     {
