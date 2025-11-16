@@ -1,24 +1,5 @@
 import { state } from "../../state.js";
 import { clone, shuffle } from "../../utils.js";
-import { getAccuracy } from "../../normalize.js";
-
-/**
- * 択一モードと同等の低正答率優先抽出（指数分布ランダム）
- */
-function buildWeightedLowAccuracyPool(original, limit){
-  const items = original.map(q=>{
-    const acc = getAccuracy(q);
-    const base = (acc===null || typeof acc!=="number") ? 1 : (1-acc);
-    const unseenBonus = (q.stats && q.stats.t===0) ? 0.5 : 0;
-    const pf = q.priorityFactor ?? 1;
-    const weight = Math.max(0.05, base + unseenBonus) * pf;
-    const key = -Math.log(Math.random()) / weight; // 小さいほど優先
-    return { q, key };
-  });
-  items.sort((a,b)=>a.key - b.key);
-  const sel = (limit && limit>0 && limit<items.length) ? items.slice(0,limit) : items;
-  return sel.map(i=>i.q);
-}
 
 /**
  * セッション構築:
@@ -27,21 +8,23 @@ function buildWeightedLowAccuracyPool(original, limit){
  */
 function buildSession(genre, opts={}){
   const all = state.quizzes[genre] || [];
-  if(!all.length) return {
-    mode: "multiple", genre, questions: [], currentIndex: 0, correctCount: 0, finished: false, answers: [], limit: 0
-  };
+  let pool = all;
 
-  let pool;
   if(opts.flaggedOnly){
-    pool = clone(all.filter(q=>q.flagged));
-    if(!pool.length) return {
-      mode: "multiple", genre, questions: [], currentIndex: 0, correctCount: 0, finished: false, answers: [], limit: 0
-    };
+    pool = pool.filter(q=>q.flagged);
   } else if(opts.lowAccuracy){
-    pool = buildWeightedLowAccuracyPool(clone(all), opts.limit);
-  } else {
-    pool = shuffle(clone(all));
-    if(opts.limit && opts.limit>0 && opts.limit<pool.length) pool = pool.slice(0, opts.limit);
+    // 低正答率優先: stats.c/stats.t が低いものを重み付け
+    const weighted = [];
+    all.forEach(q=>{
+      const t = q.stats?.t||0;
+      const c = q.stats?.c||0;
+      const acc = t>0? c/t:0;
+      const weight = 1 + (1-acc)*2 + (t===0? 1.5:0);
+      const w = q.priorityFactor? weight*q.priorityFactor : weight;
+      const copies = Math.ceil(w);
+      for(let i=0;i<copies;i++) weighted.push(q);
+    });
+    pool = shuffle(weighted);
   }
 
   // single 形式 → multiple 形式へ補正
@@ -62,13 +45,15 @@ function buildSession(genre, opts={}){
     currentIndex: 0,
     correctCount: 0,
     finished: false,
-    answers: [],
-    limit: selected.length
+    answers: [], // user selections per question (array of indexes[])
+    limit
   };
 }
 
 /**
- * 採点: 完全一致のみ正解
+ * 採点:
+ *  - 完全一致で正解
+ *  - 部分正解や部分点は Phase 3 最小では未対応（後で拡張可能）
  */
 function gradeQuestion(q, userSelections){
   const correctSet = new Set(

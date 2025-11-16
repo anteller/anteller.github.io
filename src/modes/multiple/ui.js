@@ -108,7 +108,7 @@ export function renderQuestionMultiple(session){
   // 問題文
   if(els.question) els.question.textContent = q.q ?? "";
 
-  // 解説を隠す（択一と同じ）
+  // 解説を隠す
   if(els.explanationBox){
     els.explanationBox.innerHTML = "";
     els.explanationBox.style.display = "none";
@@ -130,11 +130,11 @@ export function renderQuestionMultiple(session){
     submitBtn.style.alignSelf="stretch";
     submitBtn.addEventListener("click", ()=>{
       submitMultipleAnswer(session);
+      setNextVisible(true);
     });
     els.choicesContainer.appendChild(submitBtn);
   }
 
-  // 結果表示の初期化（択一準拠）
   if(els.result){
     els.result.textContent="";
     els.result.style.color="inherit";
@@ -163,7 +163,7 @@ export function submitMultipleAnswer(session, { forcedDontKnow=false } = {}){
   // 統計
   q.stats = q.stats || { c:0, t:0 };
   q.stats.t += 1;
-  if(correct && !forcedDontKnow) q.stats.c += 1;
+  if(correct) q.stats.c += 1;
 
   saveQuizzes(state.appMode);
 
@@ -196,18 +196,11 @@ export function submitMultipleAnswer(session, { forcedDontKnow=false } = {}){
   });
 
   state.answered = true;
-  disableIDontKnow();
 
-  // 結果表示（択一準拠）
+  // 結果表示
   if(els.result){
-    if(forcedDontKnow){
-      els.result.textContent = "✕ わからない";
-      els.result.style.color = "rgb(239,68,68)";
-    } else {
-      els.result.textContent = correct? "◯ 正解！":"✕ 不正解";
-      els.result.style.color = correct? "rgb(34,197,94)" : "rgb(239,68,68)";
-      if(correct) state.correctCount++;
-    }
+    els.result.textContent = correct? "〇 正解！":"✕ 不正解";
+    els.result.style.color = correct? "rgb(34,197,94)" : "rgb(239,68,68)";
   }
 
   if(els.subResult){
@@ -243,7 +236,7 @@ export function nextMultiple(session){
     if(els.question) els.question.textContent="終了";
     if(els.choicesContainer) els.choicesContainer.innerHTML="";
     if(els.result){
-      els.result.textContent = `正解数: ${state.correctCount} / ${session.questions.length}`;
+      els.result.textContent = `正解数: ${session.correctCount} / ${session.questions.length}`;
       els.result.style.color="inherit";
     }
     showToast("複数選択モード 終了");
