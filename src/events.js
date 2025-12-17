@@ -38,8 +38,7 @@ import {
 import { showScreen, showToast } from "./utils.js";
 import { saveSettings, safeLoadQuizzes, loadGenreOrder, saveGenreOrder, saveQuizzes } from "./storage.js";
 import { loadMode } from "./modes/registry.js";
-import multipleUI from "./modes/multiple/ui.js";
-import flashUI from "./modes/flashcards/ui.js";
+// mode ui は state.currentModeModule.ui 経由で参照する（Phase 0）
 
 /* モード表示更新 */
 function updateModeButtonsUI() {
@@ -126,91 +125,30 @@ export function bindEvents(){
   /* キーボード */
   window.addEventListener("keydown", e=>{
     const session = state.activeSession;
-    if(session?.mode === "multiple"){
-      // Enter/Space: 未確定なら採点、確定済みなら次へ
-      if(e.key==="Enter" || e.key===" "){
-        if(!state.answered){
-          multipleUI.submitMultipleAnswer(session);
-        } else {
-          multipleUI.nextMultiple(session);
-        }
-        return;
-      }
-    if(session?.mode === "multiple"){
-      if(e.key==="Enter" || e.key===" "){
-        if(!state.answered){
-          multipleUI.submitMultipleAnswer(session);
-        } else {
-          multipleUI.nextMultiple(session);
-        }
-        return;
-      }
-      if(/^[1-9]$/.test(e.key)){
-        const idx = +e.key - 1;
-        const btn = els.choicesContainer?.querySelector(`.choice[data-index='${idx}']`);
-        if(btn) btn.click(); // button化したので click で十分
-        return;
-      }
-      return;
-    }
-      // 数字キー: トグルのみ
-      if(/^[1-9]$/.test(e.key)){
-        const idx = +e.key - 1;
-        const cb = els.choicesContainer?.querySelector(`.choice[data-index='${idx}'] input[type=checkbox]`);
-        if(cb){
-          cb.checked = !cb.checked;
-          cb.dispatchEvent(new Event("change",{bubbles:true}));
-        }
-        return;
-      }
-      return;
-    }
-    if(session?.mode === "flashcards"){
-      if(e.key==="Enter" || e.key===" "){
-        flashUI.nextFlashcard(session);
-        return;
-      }
-      return;
-    }
-    // single
-    if(state.answered && state.settings.progressMode==="manual" && (e.key==="Enter"||e.key===" ")){
-      nextQuestionManual();
-      return;
-    }
-    if(state.answered) return;
-    if(/^[1-9]$/.test(e.key)){
-      const n=+e.key;
-      const choices=[...els.choicesContainer.querySelectorAll(".choice")];
-      if(n>=1 && n<=choices.length) handleAnswer(n-1);
-    } else if(e.key==="0"){
-      handleDontKnow();
+
+    const modeUI = state.currentModeModule?.ui;
+    if(modeUI && typeof modeUI.onKeyDown === "function"){
+      const handled = modeUI.onKeyDown(e, session);
+      if(handled) return;
     }
   });
 
   /* わからない */
   els.iDontKnowBtn?.addEventListener("click", ()=>{
-    const session=state.activeSession;
-    if(session?.mode==="multiple"){
-      multipleUI.submitMultipleAnswer(session,{forcedDontKnow:true});
-      return;
-    }
-    if(session?.mode==="flashcards"){
-      flashUI.nextFlashcard(session);
-      return;
+    const session = state.activeSession;
+    const modeUI = state.currentModeModule?.ui;
+    if(modeUI && typeof modeUI.onDontKnow === "function"){
+      if(modeUI.onDontKnow(session)) return;
     }
     handleDontKnow();
   });
 
   /* 次へ */
   els.nextQuestionBtn?.addEventListener("click", ()=>{
-    const session=state.activeSession;
-    if(session?.mode==="multiple"){
-      multipleUI.nextMultiple(session);
-      return;
-    }
-    if(session?.mode==="flashcards"){
-      flashUI.nextFlashcard(session);
-      return;
+    const session = state.activeSession;
+    const modeUI = state.currentModeModule?.ui;
+    if(modeUI && typeof modeUI.onNext === "function"){
+      if(modeUI.onNext(session)) return;
     }
     nextQuestionManual();
   });

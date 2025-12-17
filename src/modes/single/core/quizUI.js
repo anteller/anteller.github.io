@@ -421,7 +421,5 @@ export function nextQuestionMultiple(session){
   renderQuestionMultiple(session);
 }
 
-/* 旧API互換のため multiple 用名前を集約 */
-export const renderQuestionMultiple = renderQuestionMultiple; // (自分自身)
-export const submitMultipleAnswer = submitMultipleAnswer;
-export const nextMultiple = nextQuestionMultiple;
+/* 旧API互換: nextMultiple のみ別名で提供 */
+export { nextQuestionMultiple as nextMultiple };

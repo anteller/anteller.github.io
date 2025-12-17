@@ -1,23 +1,14 @@
 import { state } from "./state.js";
-import * as singleUI from "./modes/single/core/quizUI.js";
-import multipleUI from "./modes/multiple/ui.js";
-import flashUI from "./modes/flashcards/ui.js";
+import * as singleCore from "./modes/single/core/quizUI.js";
 
-// モードに応じて描画を委譲
+// Phase 0: モードモジュール(ui.render) を優先し、無ければ single へフォールバック
 export function renderQuestion(){
   const session = state.activeSession;
-  if(session){
-    if(session.mode === "multiple"){
-      multipleUI.renderQuestionMultiple(session);
-      return;
-    }
-    if(session.mode === "flashcards"){
-      flashUI.renderFlashcard(session);
-      return;
-    }
+  const modeUI = state.currentModeModule?.ui;
+  if(modeUI && typeof modeUI.render === "function"){
+    return modeUI.render(session);
   }
-  // single 既存処理へ
-  return singleUI.renderQuestion();
+  return singleCore.renderQuestion();
 }
 
 // single の他APIは既存実装をそのまま re-export

@@ -3,6 +3,11 @@ import { showToast } from "../../utils.js";
 import { saveQuizzes } from "../../storage.js";
 import { state } from "../../state.js";
 
+function isQuizScreenActive(){
+  const screen = document.querySelector(".panel:not(.hidden)[data-screen]");
+  return screen?.dataset?.screen === "quizScreen";
+}
+
 export function renderFlashcard(session){
   const card = session.cards[session.currentIndex];
   if(!card){
@@ -64,7 +69,37 @@ export function nextFlashcard(session){
   }
 }
 
+export function render(session){
+  return renderFlashcard(session);
+}
+
+export function onKeyDown(e, session){
+  if(!isQuizScreenActive()) return false;
+  if(!session) return false;
+  if(e.key === "Enter" || e.key === " "){
+    nextFlashcard(session);
+    return true;
+  }
+  return false;
+}
+
+export function onDontKnow(session){
+  if(!session) return false;
+  nextFlashcard(session);
+  return true;
+}
+
+export function onNext(session){
+  if(!session) return false;
+  nextFlashcard(session);
+  return true;
+}
+
 export default {
   renderFlashcard,
-  nextFlashcard
+  nextFlashcard,
+  render,
+  onKeyDown,
+  onDontKnow,
+  onNext
 };
