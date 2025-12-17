@@ -76,7 +76,7 @@ export function applyUndo(){
           arr.splice(idx,0,entry.question);
         });
       }
-      saveQuizzes();
+      saveQuizzes(state.appMode);
       rebuildGenreButtons();
       showToast("問題の削除を元に戻しました");
       break;
@@ -91,7 +91,8 @@ export function applyUndo(){
       state.quizzes[name]=u.questions;
       const idx=u.genreIndex<=state.genreOrder.length? u.genreIndex:state.genreOrder.length;
       state.genreOrder.splice(idx,0,name);
-      saveQuizzes(); saveGenreOrder();
+      saveQuizzes(state.appMode);
+      saveGenreOrder(state.genreOrder, state.appMode);
       rebuildGenreButtons();
       showToast("ジャンル削除を元に戻しました");
       break;
@@ -102,11 +103,17 @@ export function applyUndo(){
       state.quizzes[u.genre].forEach(q=>{
         const rec=map.get(q.id);
         if(rec){
-          q.stats.c=rec.c;
-            q.stats.t=rec.t;
+          if(q.stats && typeof q.front === "string" && typeof q.back === "string"){
+            q.stats.seen = rec.seen ?? 0;
+            q.stats.known = rec.known ?? 0;
+          } else {
+            q.stats = q.stats || { c:0, t:0 };
+            q.stats.c = rec.c ?? 0;
+            q.stats.t = rec.t ?? 0;
+          }
         }
       });
-      saveQuizzes();
+      saveQuizzes(state.appMode);
       showToast("統計リセットを元に戻しました");
       break;
     }

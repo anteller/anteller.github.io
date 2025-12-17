@@ -88,6 +88,7 @@ function normalizeFlashcard(r){
     id: baseId(r.id),
     front,
     back,
+    exp: typeof r.exp === "string" ? r.exp : "",
     tags: normalizeTags(r.tags),
     stats: r.stats && typeof r.stats==="object"
       ? { seen: r.stats.seen||0, known: r.stats.known||0 }

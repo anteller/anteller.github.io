@@ -59,7 +59,8 @@ export function safeLoadQuizzes(mode){
 
     if(!raw){
       // もし新しいキーにデータがなければ、既存の旧キー(STORAGE_KEY)をフォールバックで読む（初回移行を楽にする）
-      if(key !== STORAGE_KEY && localStorage.getItem(STORAGE_KEY)){
+      // NOTE: 旧キーの内容は single として扱う（multiple/flashcards へ流入させない）
+      if(key === STORAGE_KEY_SINGLE && localStorage.getItem(STORAGE_KEY)){
         const legacyRaw = localStorage.getItem(STORAGE_KEY);
         if(legacyRaw){
           try{
@@ -73,9 +74,9 @@ export function safeLoadQuizzes(mode){
           }
         }
       }
-      if ((mode || state.settings?.appMode) === "multiple") {
-        return migrateQuizzes(clone(defaultQuizzesMultiple));
-      }
+      const resolvedMode = mode || state.settings?.appMode || APP_MODES.SINGLE;
+      if (resolvedMode === APP_MODES.MULTIPLE) return migrateQuizzes(clone(defaultQuizzesMultiple));
+      if (resolvedMode === APP_MODES.FLASHCARDS) return { __version: DATA_VERSION };
       return migrateQuizzes(clone(defaultQuizzes));
     }
 
@@ -88,6 +89,9 @@ export function safeLoadQuizzes(mode){
     return parsed;
   }catch(err){
     console.error("safeLoadQuizzes error", err);
+    const resolvedMode = mode || state.settings?.appMode || APP_MODES.SINGLE;
+    if (resolvedMode === APP_MODES.MULTIPLE) return migrateQuizzes(clone(defaultQuizzesMultiple));
+    if (resolvedMode === APP_MODES.FLASHCARDS) return { __version: DATA_VERSION };
     return migrateQuizzes(clone(defaultQuizzes));
   }
 }
@@ -149,7 +153,8 @@ export function loadGenreOrder(mode){
     if(!raw){
       // フォールバック: 旧の global GENRE_ORDER_KEY を読む（初回移行用）
       const legacy = localStorage.getItem(GENRE_ORDER_KEY);
-      if(legacy){
+      // NOTE: 旧キーは single として扱う（multiple/flashcards へ流入させない）
+      if(legacy && key === GENRE_ORDER_KEY_SINGLE){
         try{
           const arr=JSON.parse(legacy);
           if(Array.isArray(arr)){
@@ -177,7 +182,8 @@ export function loadGenreOrder(mode){
 export function saveGenreOrder(order, mode){
   try{
     const key = keyForGenreOrder(mode || state.settings?.appMode);
-    localStorage.setItem(key, JSON.stringify(order));
+    const resolvedOrder = Array.isArray(order) ? order : (Array.isArray(state.genreOrder) ? state.genreOrder : []);
+    localStorage.setItem(key, JSON.stringify(resolvedOrder));
   }catch(err){
     console.error("saveGenreOrder failed", err);
   }

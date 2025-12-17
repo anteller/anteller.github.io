@@ -38,6 +38,7 @@ import {
 import { showScreen, showToast } from "./utils.js";
 import { saveSettings, safeLoadQuizzes, loadGenreOrder, saveGenreOrder, saveQuizzes } from "./storage.js";
 import { loadMode } from "./modes/registry.js";
+import { addMultipleChoiceRow } from "./modes/multiple/manage.js";
 // mode ui は state.currentModeModule.ui 経由で参照する（Phase 0）
 
 /* モード表示更新 */
@@ -60,6 +61,13 @@ async function setAppMode(mode) {
     updateModeButtonsUI();
     return;
   }
+
+  // Undo が別モードへ誤適用されないようにクリア
+  if(state.lastUndo?.timerId){
+    try{ clearTimeout(state.lastUndo.timerId); }catch{}
+  }
+  state.lastUndo = null;
+
   // セッション破棄
   state.activeSession = null;
   state.questions = [];
@@ -229,11 +237,21 @@ export function bindEvents(){
   els.backBtn?.addEventListener("click", ()=>{
     if(confirm("進行中のクイズを終了しますか？")) showScreen("genreSelect");
   });
-  els.retryWrongBtn?.addEventListener("click", retryWrongOnly);
+  els.retryWrongBtn?.addEventListener("click", ()=>{
+    const modeUI = state.currentModeModule?.ui;
+    if(modeUI && typeof modeUI.retryWrongOnly === "function"){
+      if(modeUI.retryWrongOnly(state.activeSession)) return;
+    }
+    retryWrongOnly();
+  });
   els.backToGenreBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
   els.retrySameBtn?.addEventListener("click", ()=>{
     const s=state.lastSession;
     if(!s||!s.genre){ showToast("直前の出題条件がありません"); return; }
+    if(s.mode && s.mode !== state.appMode){
+      showToast("直前の出題条件は別モードのため再挑戦できません");
+      return;
+    }
     if(s.flaggedOnly)      startQuizFlaggedOnly(s.genre);
     else if(s.lowAccuracy) startQuizLowAcc(s.genre,s.limit);
     else                   startQuizNormal(s.genre,s.limit);
@@ -273,6 +291,16 @@ export function bindEvents(){
   });
 
   /* 管理画面操作 */
+  els.manageAddBtn?.addEventListener("click", ()=>{
+    const val = els.genreFilterSelect ? els.genreFilterSelect.value : state.currentGenre;
+    if(val === "__ALL__"){
+      showToast("「(すべて)」表示中は問題追加できません");
+      return;
+    }
+    const g = val || state.currentGenre || state.genreOrder[0] || "";
+    showAddScreen(g);
+  });
+
   els.manageListWrap?.addEventListener("click", onManageListClick);
   els.manageListWrap?.addEventListener("change", handleManageCheckboxChange);
   els.selectAllBtn?.addEventListener("click", ()=>{
@@ -305,6 +333,10 @@ export function bindEvents(){
   /* ジャンルフィルタ */
   els.genreFilterSelect?.addEventListener("change", ()=>{
     const val=els.genreFilterSelect.value;
+    const allMode = val === "__ALL__";
+    if(els.genreExportBtn) els.genreExportBtn.disabled = allMode;
+    if(els.resetStatsBtn) els.resetStatsBtn.disabled = allMode;
+    if(els.manageAddBtn) els.manageAddBtn.disabled = allMode;
     if(val==="__ALL__"){
       if(els.manageTitle) els.manageTitle.textContent="問題管理 - (すべて)";
     } else {
@@ -351,7 +383,24 @@ export function bindEvents(){
     const g = state.currentGenre || state.genreOrder[0] || "";
     showAddScreen(g);
   });
-  els.addChoiceBtn?.addEventListener("click", ()=>addChoiceInput(""));
+  els.addChoiceBtn?.addEventListener("click", ()=>{
+    if(state.appMode === "multiple"){
+      const area = els.choicesEditArea;
+      if(!area) return;
+      const rows = area.querySelectorAll(".choice-editor-row").length;
+      if(rows >= 6){
+        showToast("選択肢は最大6です");
+        return;
+      }
+      addMultipleChoiceRow(area, "", false);
+      return;
+    }
+    if(state.appMode === "flashcards"){
+      // ボタン自体は非表示にしている想定
+      return;
+    }
+    addChoiceInput("");
+  });
   els.addForm?.addEventListener("submit", e=>{
     e.preventDefault();
     handleAddQuestion(false);

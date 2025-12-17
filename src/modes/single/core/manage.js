@@ -8,7 +8,9 @@
 import { state } from "../../../state.js";
 import {
   MIN_CHOICES, MAX_CHOICES, DEFAULT_SETTINGS,
-  STORAGE_KEY, GENRE_ORDER_KEY, SETTINGS_KEY, DATA_VERSION
+  STORAGE_KEY, SETTINGS_KEY, GENRE_ORDER_KEY, DATA_VERSION,
+  STORAGE_KEY_SINGLE, STORAGE_KEY_MULTIPLE, STORAGE_KEY_FLASH,
+  GENRE_ORDER_KEY_SINGLE, GENRE_ORDER_KEY_MULTIPLE, GENRE_ORDER_KEY_FLASH
 } from "../../../constants.js";
 import { els } from "../../../domRefs.js";
 import {
@@ -21,8 +23,58 @@ import {
 import { normalizeQuestion } from "../../../normalize.js";
 import { recordUndo } from "../../../undo.js";
 import { defaultQuizzes } from "../../../defaultQuizzes.js";
+import { defaultQuizzesMultiple } from "../../../defaultQuizzesMultiple.js";
 import multipleManage from "../../multiple/manage.js";
 import flashManage from "../../flashcards/manage.js";
+
+function isFlashcard(q){
+  return q && typeof q.front === "string" && typeof q.back === "string";
+}
+function isMultiple(q){
+  return q && Array.isArray(q.correctIndexes);
+}
+function getTotalCount(q){
+  if(isFlashcard(q)) return q.stats?.seen || 0;
+  return q.stats?.t || 0;
+}
+function getCorrectCount(q){
+  if(isFlashcard(q)) return q.stats?.known || 0;
+  return q.stats?.c || 0;
+}
+function getAccuracyRate(q){
+  const total = getTotalCount(q);
+  if(!total) return 0;
+  return getCorrectCount(q) / total;
+}
+function getStatsLabel(q){
+  return isFlashcard(q) ? "既知率" : "正答率";
+}
+function resetStatsForDuplicate(q){
+  if(isFlashcard(q)){
+    q.stats = { seen:0, known:0 };
+    return;
+  }
+  q.stats = { c:0, t:0 };
+}
+
+function applyFlashcardsFormMode(){
+  // A: flashcardsでは questionInput を無効化し required を外す
+  if(els.questionInput){
+    els.questionInput.disabled = true;
+    els.questionInput.required = false;
+    els.questionInput.value = "";
+    els.questionInput.placeholder = "";
+  }
+  if(els.addChoiceBtn) els.addChoiceBtn.style.display = "none";
+}
+function applyNonFlashcardsFormMode(){
+  if(els.questionInput){
+    els.questionInput.disabled = false;
+    els.questionInput.required = true;
+    if(!els.questionInput.placeholder) els.questionInput.placeholder = "例: 5 + 7 = ?";
+  }
+  if(els.addChoiceBtn) els.addChoiceBtn.style.display = "";
+}
 
 /* ========== 内部ユーティリティ ========== */
 function rebuildGenreSelect(){
@@ -63,6 +115,7 @@ function updateManageActionButtons(){
   const allMode = els.genreFilterSelect && els.genreFilterSelect.value==="__ALL__";
   if(els.genreExportBtn) els.genreExportBtn.disabled=allMode;
   if(els.resetStatsBtn) els.resetStatsBtn.disabled=allMode;
+  if(els.manageAddBtn) els.manageAddBtn.disabled=allMode;
 }
 function mkMiniBtn(label,act,id,genre,variant){
   const b=document.createElement("button");
@@ -240,6 +293,9 @@ export function rebuildManageList(){
       filtered=filtered.filter(q=>{
         const hay=[];
         if(q.q) hay.push(q.q);
+        if(isFlashcard(q)){
+          hay.push(q.front, q.back);
+        }
         if(Array.isArray(q.choices)) hay.push(...q.choices);
         if(Array.isArray(q.tags)) hay.push(...q.tags);
         const joined=hay.map(v=>String(v).toLowerCase()).join("\n");
@@ -253,14 +309,14 @@ export function rebuildManageList(){
   filtered=filtered.slice();
   if(state.sortMode==="accdesc"||state.sortMode==="accasc"){
     filtered.sort((a,b)=>{
-      const aa=a.stats&&a.stats.t>0? a.stats.c/a.stats.t:0;
-      const bb=b.stats&&b.stats.t>0? b.stats.c/b.stats.t:0;
+      const aa=getAccuracyRate(a);
+      const bb=getAccuracyRate(b);
       return state.sortMode==="accdesc"? bb-aa : aa-bb;
     });
   } else if(state.sortMode==="countdesc"||state.sortMode==="countasc"){
     filtered.sort((a,b)=>{
-      const at=a.stats? a.stats.t:0;
-      const bt=b.stats? b.stats.t:0;
+      const at=getTotalCount(a);
+      const bt=getTotalCount(b);
       return state.sortMode==="countdesc"? bt-at : at-bt;
     });
   }
@@ -278,9 +334,10 @@ export function rebuildManageList(){
   ul.className="question-list";
   filtered.forEach(q=>{
     const genreOfQ=q.__genre;
-    const acc=(q.stats && q.stats.t>0)? (q.stats.c/q.stats.t*100):null;
+    const total=getTotalCount(q);
+    const acc=total>0? (getAccuracyRate(q)*100):null;
     const accStr=acc===null? "-" : acc.toFixed(1)+"%";
-    const countStr=q.stats? `${q.stats.c}/${q.stats.t}`:"0/0";
+    const countStr=`${getCorrectCount(q)}/${total}`;
     const originalIndex = state.quizzes[genreOfQ]
       ? state.quizzes[genreOfQ].findIndex(x=>x.id===q.id)
       : -1;
@@ -294,7 +351,8 @@ export function rebuildManageList(){
     cb.type="checkbox"; cb.className="q-select";
     cb.dataset.id=q.id; cb.dataset.genre=genreOfQ;
     const qMain=document.createElement("div");
-    qMain.className="q-main"; qMain.textContent=q.q;
+    qMain.className="q-main";
+    qMain.textContent=isFlashcard(q)? q.front : q.q;
     selCol.append(cb,qMain);
 
     const statsBox=document.createElement("div");
@@ -302,7 +360,7 @@ export function rebuildManageList(){
     statsBox.style.minWidth="120px";
     statsBox.style.fontSize="11px";
     statsBox.style.color="var(--c-text-sub)";
-    const accDiv=document.createElement("div"); accDiv.innerHTML=`正答率: <strong>${accStr}</strong>`;
+    const accDiv=document.createElement("div"); accDiv.innerHTML=`${getStatsLabel(q)}: <strong>${accStr}</strong>`;
     const cntDiv=document.createElement("div"); cntDiv.textContent=countStr;
     statsBox.append(accDiv,cntDiv);
     rowTop.append(selCol,statsBox);
@@ -316,8 +374,21 @@ export function rebuildManageList(){
       meta.appendChild(gBadge);
     }
     const metaBadge=document.createElement("span"); metaBadge.className="badge-inline"; metaBadge.textContent=`#${originalIndex+1}`;
-    const metaChoices=document.createElement("span"); metaChoices.textContent=`選択肢: ${q.choices.length}`;
-    const metaAns=document.createElement("span"); metaAns.textContent=`正解: ${q.answer+1}`;
+    const metaChoices=document.createElement("span");
+    const metaAns=document.createElement("span");
+    if(isFlashcard(q)){
+      metaChoices.textContent="単語カード";
+      metaAns.textContent="";
+      metaAns.style.opacity=".6";
+    } else {
+      metaChoices.textContent=`選択肢: ${(q.choices||[]).length}`;
+      if(isMultiple(q)){
+        metaAns.textContent=`正解数: ${(q.correctIndexes||[]).length}`;
+      } else {
+        const ans = Number.isInteger(q.answer)? q.answer:0;
+        metaAns.textContent=`正解: ${ans+1}`;
+      }
+    }
     const metaExp=document.createElement("span"); metaExp.textContent=q.exp && q.exp.trim()!=="" ? "解説あり":"解説なし";
     if(!(q.exp && q.exp.trim()!=="")) metaExp.style.opacity=".6";
     const metaTags=document.createElement("span");
@@ -328,7 +399,7 @@ export function rebuildManageList(){
       metaTags.textContent="タグなし";
       metaTags.style.opacity=".6";
     }
-    if(q.priorityFactor && Math.abs(q.priorityFactor-1)>0.001){
+    if(!isFlashcard(q) && q.priorityFactor && Math.abs(q.priorityFactor-1)>0.001){
       const pfSpan=document.createElement("span");
       pfSpan.className="badge-inline";
       pfSpan.style.background="#f59e0b";
@@ -346,23 +417,25 @@ export function rebuildManageList(){
     flagBtn.title="要チェック切替";
     flagBtn.textContent=q.flagged? "★ 要チェック":"☆ 要チェック";
 
-    const pfWrap=document.createElement("div");
-    pfWrap.className="pf-actions";
-    const upBtn=document.createElement("button");
-    upBtn.type="button"; upBtn.className="btn small pf-up"; upBtn.textContent="↑出題率";
-    upBtn.dataset.id=q.id; upBtn.dataset.genre=genreOfQ; upBtn.dataset.act="pf-up";
-    const downBtn=document.createElement("button");
-    downBtn.type="button"; downBtn.className="btn small pf-down"; downBtn.textContent="↓出題率";
-    downBtn.dataset.id=q.id; downBtn.dataset.genre=genreOfQ; downBtn.dataset.act="pf-down";
-    const pfBadge=document.createElement("span");
-    pfBadge.className="pf-indicator-badge";
-    pfBadge.textContent="x"+(q.priorityFactor? q.priorityFactor.toFixed(2):"1.00");
-    pfBadge.dataset.id=q.id; pfBadge.dataset.genre=genreOfQ;
-    pfWrap.append(upBtn,downBtn,pfBadge);
+    actions.append(flagBtn);
+    if(!isFlashcard(q)){
+      const pfWrap=document.createElement("div");
+      pfWrap.className="pf-actions";
+      const upBtn=document.createElement("button");
+      upBtn.type="button"; upBtn.className="btn small pf-up"; upBtn.textContent="↑出題率";
+      upBtn.dataset.id=q.id; upBtn.dataset.genre=genreOfQ; upBtn.dataset.act="pf-up";
+      const downBtn=document.createElement("button");
+      downBtn.type="button"; downBtn.className="btn small pf-down"; downBtn.textContent="↓出題率";
+      downBtn.dataset.id=q.id; downBtn.dataset.genre=genreOfQ; downBtn.dataset.act="pf-down";
+      const pfBadge=document.createElement("span");
+      pfBadge.className="pf-indicator-badge";
+      pfBadge.textContent="x"+(q.priorityFactor? q.priorityFactor.toFixed(2):"1.00");
+      pfBadge.dataset.id=q.id; pfBadge.dataset.genre=genreOfQ;
+      pfWrap.append(upBtn,downBtn,pfBadge);
+      actions.append(pfWrap);
+    }
 
     actions.append(
-      flagBtn,
-      pfWrap,
       mkMiniBtn("編集","edit",q.id,genreOfQ),
       mkMiniBtn("複製","dup",q.id,genreOfQ,"warn"),
       mkMiniBtn("削除","del",q.id,genreOfQ,"danger")
@@ -551,9 +624,22 @@ export function resetGenreStats(){
   if(!state.quizzes[g].length){ showToast("問題がありません"); return; }
   if(!confirm(`ジャンル「${g}」の全問題の正答率(統計)をリセットしますか？`)) return;
 
-  const prevStats=state.quizzes[g].map(q=>({id:q.id,c:q.stats? q.stats.c:0,t:q.stats? q.stats.t:0}));
+  const prevStats=state.quizzes[g].map(q=>{
+    if(isFlashcard(q)){
+      return { id:q.id, seen:q.stats? q.stats.seen:0, known:q.stats? q.stats.known:0 };
+    }
+    return { id:q.id, c:q.stats? q.stats.c:0, t:q.stats? q.stats.t:0 };
+  });
   state.quizzes[g].forEach(q=>{
-    if(q.stats){ q.stats.c=0; q.stats.t=0; } else q.stats={c:0,t:0};
+    if(isFlashcard(q)){
+      q.stats = q.stats || { seen:0, known:0 };
+      q.stats.seen = 0;
+      q.stats.known = 0;
+      return;
+    }
+    q.stats = q.stats || { c:0, t:0 };
+    q.stats.c = 0;
+    q.stats.t = 0;
   });
   saveQuizzes();
   rebuildManageList();
@@ -569,33 +655,35 @@ export function resetAllData(){
   if(!confirm("全データ（問題・ジャンル・統計・設定）を初期化しますか？")) return;
   if(!confirm("本当に初期化しますか？（元に戻せません）")) return;
 
-  try{ localStorage.removeItem(STORAGE_KEY); }catch{}
-  try{ localStorage.removeItem(GENRE_ORDER_KEY); }catch{}
-  try{ localStorage.removeItem(SETTINGS_KEY); }catch{}
+  // 互換: 旧キーも含め全モードのキーを掃除
+  [
+    STORAGE_KEY,
+    STORAGE_KEY_SINGLE, STORAGE_KEY_MULTIPLE, STORAGE_KEY_FLASH,
+    GENRE_ORDER_KEY,
+    GENRE_ORDER_KEY_SINGLE, GENRE_ORDER_KEY_MULTIPLE, GENRE_ORDER_KEY_FLASH,
+    SETTINGS_KEY
+  ].forEach(k=>{ try{ localStorage.removeItem(k); }catch{} });
 
-  const fresh = migrateQuizzes(clone(defaultQuizzes));
-  state.quizzes = fresh;
-  state.genreOrder = Object.keys(fresh).filter(k=>!k.startsWith("__"));
-  state.settings = { ...DEFAULT_SETTINGS };
-  saveSettings();
-  saveQuizzes();
-  saveGenreOrder();
+  // single/multiple はデフォルト投入。flashcards は空で開始。
+  const freshSingle = migrateQuizzes(clone(defaultQuizzes));
+  const freshMultiple = migrateQuizzes(clone(defaultQuizzesMultiple));
 
-  state.currentGenre=null;
-  state.questions=[];
-  state.currentIndex=0;
-  state.correctCount=0;
-  state.wrongQuestions=[];
-  state.correctQuestions=[];
-  state.selectedQuestionIds.clear();
-  state.lastUndo=null;
-  state.lastSession={ genre:null, limit:null, lowAccuracy:false, flaggedOnly:false };
-  state.isEditingQuestion=false;
-  state.editingIndex=-1;
+  const orderSingle = Object.keys(freshSingle).filter(k=>!k.startsWith("__"));
+  const orderMultiple = Object.keys(freshMultiple).filter(k=>!k.startsWith("__"));
 
-  rebuildGenreButtons();
-  showScreen("genreSelect");
-  showToast("初期化しました（初期問題を再読込）");
+  try{ localStorage.setItem(STORAGE_KEY_SINGLE, JSON.stringify(freshSingle)); }catch{}
+  try{ localStorage.setItem(STORAGE_KEY_MULTIPLE, JSON.stringify(freshMultiple)); }catch{}
+  try{ localStorage.setItem(STORAGE_KEY_FLASH, JSON.stringify({ __version: DATA_VERSION })); }catch{}
+
+  // genreOrder も各モードに保存（再読み込み後の表示順を安定させる）
+  try{ localStorage.setItem(GENRE_ORDER_KEY_SINGLE, JSON.stringify(orderSingle)); }catch{}
+  try{ localStorage.setItem(GENRE_ORDER_KEY_MULTIPLE, JSON.stringify(orderMultiple)); }catch{}
+  try{ localStorage.setItem(GENRE_ORDER_KEY_FLASH, JSON.stringify([])); }catch{}
+
+  // モード/モジュール/イベント等を含む状態を確実に揃えるため、ここでリロードする
+  showToast("初期化しました。再読み込みします…");
+  setTimeout(()=>{ try{ location.reload(); }catch{} }, 200);
+  return;
 }
 
 export function exportCurrentGenre(){
@@ -723,15 +811,18 @@ function collectNewQuestion(){
 export function initChoiceEditors(){
   if(!els.choicesEditArea) return;
   if(state.appMode === "multiple"){
+    applyNonFlashcardsFormMode();
     els.choicesEditArea.innerHTML="";
     multipleManage.buildMultipleEditor(els.choicesEditArea,null);
     return;
   }
   if(state.appMode === "flashcards"){
+    applyFlashcardsFormMode();
     els.choicesEditArea.innerHTML="";
     flashManage.buildFlashcardEditor(els.choicesEditArea,null);
     return;
   }
+  applyNonFlashcardsFormMode();
   els.choicesEditArea.innerHTML="";
   addChoiceInput("",true);
   addChoiceInput("",false);
@@ -798,7 +889,12 @@ export function populateEditForm(genre,index){
     els.genreInput.disabled=true;
   }
 
-  if(els.questionInput) els.questionInput.value = q.q || q.front || "";
+  if(state.appMode === "flashcards"){
+    applyFlashcardsFormMode();
+  } else {
+    applyNonFlashcardsFormMode();
+    if(els.questionInput) els.questionInput.value = q.q || "";
+  }
   if(els.explanationInput) els.explanationInput.value = q.exp || "";
   if(els.tagsInput) els.tagsInput.value = q.tags? q.tags.join(",") : "";
 
@@ -819,24 +915,53 @@ export function handleAddQuestion(stay=false){
   const data=collectNewQuestion();
   if(!data) return;
   if(!state.quizzes[data.genre]) state.quizzes[data.genre]=[];
-  state.quizzes[data.genre].push({
-    id:createId(),
-    q:data.question,
-    choices:data.choices,
-    answer:data.answer,
-    exp:data.exp,
-    tags:data.tags,
-    stats:{c:0,t:0},
-    flagged:false,
-    priorityFactor:1
-  });
+
+  if(state.appMode === "flashcards"){
+    state.quizzes[data.genre].push({
+      id:createId(),
+      front:data.front,
+      back:data.back,
+      exp:data.exp,
+      tags:data.tags,
+      stats:{ seen:0, known:0 },
+      flagged:false
+    });
+  } else if(state.appMode === "multiple"){
+    state.quizzes[data.genre].push({
+      id:createId(),
+      q:data.question,
+      choices:data.choices,
+      correctIndexes:data.correctIndexes,
+      exp:data.exp,
+      tags:data.tags,
+      stats:{ c:0, t:0 },
+      flagged:false,
+      priorityFactor:1
+    });
+  } else {
+    state.quizzes[data.genre].push({
+      id:createId(),
+      q:data.question,
+      choices:data.choices,
+      answer:data.answer,
+      exp:data.exp,
+      tags:data.tags,
+      stats:{c:0,t:0},
+      flagged:false,
+      priorityFactor:1
+    });
+  }
   saveQuizzes();
   showToast("追加しました");
   rebuildGenreButtons();
   if(stay){
-    if(els.questionInput) els.questionInput.focus();
+    if(state.appMode === "flashcards"){
+      els.choicesEditArea?.querySelector(".fc-front")?.focus();
+    } else {
+      if(els.questionInput) els.questionInput.focus();
+    }
     initChoiceEditors();
-    if(els.questionInput) els.questionInput.value="";
+    if(state.appMode !== "flashcards" && els.questionInput) els.questionInput.value="";
     if(els.explanationInput) els.explanationInput.value="";
     if(els.tagsInput) els.tagsInput.value="";
   } else {
@@ -851,9 +976,29 @@ export function handleSaveEdit(){
   const genre=state.currentGenre;
   const arr=state.quizzes[genre];
   const old=arr[state.editingIndex];
-  let ans=data.answer;
-  if(ans<0 || ans>=data.choices.length) ans=0;
-  arr[state.editingIndex]={...old,q:data.question,choices:data.choices,answer:ans,exp:data.exp,tags:data.tags};
+
+  if(state.appMode === "flashcards"){
+    arr[state.editingIndex] = {
+      ...old,
+      front: data.front,
+      back: data.back,
+      exp: data.exp,
+      tags: data.tags
+    };
+  } else if(state.appMode === "multiple"){
+    arr[state.editingIndex] = {
+      ...old,
+      q: data.question,
+      choices: data.choices,
+      correctIndexes: data.correctIndexes,
+      exp: data.exp,
+      tags: data.tags
+    };
+  } else {
+    let ans=data.answer;
+    if(ans<0 || ans>=data.choices.length) ans=0;
+    arr[state.editingIndex]={...old,q:data.question,choices:data.choices,answer:ans,exp:data.exp,tags:data.tags};
+  }
   saveQuizzes();
   showToast("更新しました");
   clearAddForm();
@@ -869,7 +1014,11 @@ export function showAddScreen(prefill){
   clearAddForm();
   if(prefill && state.quizzes[prefill] && els.genreInput) els.genreInput.value=prefill;
   showScreen("addScreen");
-  if(els.questionInput) els.questionInput.focus();
+  if(state.appMode === "flashcards"){
+    els.choicesEditArea?.querySelector(".fc-front")?.focus();
+  } else {
+    if(els.questionInput) els.questionInput.focus();
+  }
 }
 
 /* ========== 内部: 個別アクション ========== */
@@ -895,7 +1044,8 @@ function handleQuestionAction(act,id,genre){
       break;
     case "dup":
       const copy=clone(arr[idx]);
-      copy.id=createId(); copy.stats={c:0,t:0};
+      copy.id=createId();
+      resetStatsForDuplicate(copy);
       arr.splice(idx+1,0,copy);
       saveQuizzes();
       rebuildManageList();

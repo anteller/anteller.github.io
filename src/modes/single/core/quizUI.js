@@ -69,6 +69,8 @@ function updatePriorityAdjustUI(){
 export function renderQuestion(){
   clearAutoTimer();
   state.answered=false;
+  if(els.iDontKnowBtn) els.iDontKnowBtn.textContent = "わからない";
+  if(els.nextQuestionBtn) els.nextQuestionBtn.textContent = "次の問題へ →";
   els.explanationBox.classList.remove("visible");
   els.explanationBox.textContent="";
   els.nextQuestionBtn.style.display="none";
@@ -194,9 +196,31 @@ export function showResult(){
   clearAutoTimer();
   showScreen("resultScreen");
   const total=state.questions.length;
-  els.score.textContent=`正解数: ${state.correctCount} / ${total}（正答率 ${ total ? Math.round(state.correctCount/total*100):0 }%）`;
+  const isFlashcards = state.lastSession?.mode === "flashcards" || (state.questions[0] && typeof state.questions[0].front === "string");
+  if(isFlashcards){
+    els.score.textContent=`既知数: ${state.correctCount} / ${total}（既知率 ${ total ? Math.round(state.correctCount/total*100):0 }%）`;
+  } else {
+    els.score.textContent=`正解数: ${state.correctCount} / ${total}（正答率 ${ total ? Math.round(state.correctCount/total*100):0 }%）`;
+  }
   els.wrongList.innerHTML="";
   els.rightList && (els.rightList.innerHTML="");
+
+  const getCorrectAnswerText = (q)=>{
+    if(!q) return "";
+    if(typeof q.front === "string" && typeof q.back === "string"){
+      return q.back;
+    }
+    if(Array.isArray(q.correctIndexes)){
+      const texts = q.correctIndexes.map(i=>q.choices && q.choices[i]).filter(Boolean);
+      return texts.join(", ");
+    }
+    return q.choices && q.choices[q.answer] ? q.choices[q.answer] : "";
+  };
+
+  const buildPromptText = (q)=>{
+    if(isFlashcards && q && typeof q.front === "string") return `${q.front} → `;
+    return q.q + " → 正解: ";
+  };
 
   // 間違い
   if(state.wrongQuestions.length>0){
@@ -210,9 +234,9 @@ export function showResult(){
       flagBtn.dataset.id=w.id;
       flagBtn.textContent=w.flagged?"★ 要チェック":"☆ 要チェック";
       const span=document.createElement("span");
-      span.textContent=w.q+" → 正解: ";
+      span.textContent=buildPromptText(w);
       const strong=document.createElement("strong");
-      strong.textContent=w.choices[w.answer];
+      strong.textContent=getCorrectAnswerText(w);
       line.append(flagBtn,span,strong);
       li.appendChild(line);
       if(w.exp && w.exp.trim()!==""){
@@ -246,9 +270,9 @@ export function showResult(){
         flagBtn.dataset.id=q.id;
         flagBtn.textContent=q.flagged?"★ 要チェック":"☆ 要チェック";
         const span=document.createElement("span");
-        span.textContent=q.q+" → 正解: ";
+        span.textContent=buildPromptText(q);
         const strong=document.createElement("strong");
-        strong.textContent=q.choices[q.answer];
+        strong.textContent=getCorrectAnswerText(q);
         line.append(flagBtn,span,strong);
         li.appendChild(line);
         if(q.exp && q.exp.trim()!==""){
@@ -271,19 +295,26 @@ export function showResult(){
 
 /* 現在の選択配列取得・更新 */
 function getMultiSelection(session){
-  const sel = session.answers[session.currentIndex];
+  const sel = session?.answers ? session.answers[state.currentIndex] : null;
   return Array.isArray(sel)? sel.slice() : [];
 }
 function setMultiSelection(session, sel){
-  session.answers[session.currentIndex] = sel.slice();
+  if(!session) return;
+  if(!Array.isArray(session.answers)) session.answers = [];
+  session.answers[state.currentIndex] = sel.slice();
 }
 
 export function renderQuestionMultiple(session){
   clearAutoTimer();
   state.answered=false;
+  if(els.iDontKnowBtn) els.iDontKnowBtn.textContent = "わからない";
   els.explanationBox.classList.remove("visible");
   els.explanationBox.textContent="";
   els.nextQuestionBtn.style.display="none";
+  if(state.settings.progressMode==="manual"){
+    els.nextQuestionBtn.textContent = "回答確定";
+    els.nextQuestionBtn.style.display = "inline-flex";
+  }
   els.result.textContent="";
   els.subResult.textContent="";
 
@@ -308,16 +339,6 @@ export function renderQuestionMultiple(session){
     els.choicesContainer.appendChild(btn);
   });
 
-  const confirmBtn=document.createElement("button");
-  confirmBtn.type="button";
-  confirmBtn.className="btn small";
-  confirmBtn.textContent="回答確定";
-  confirmBtn.style.marginTop="12px";
-  confirmBtn.addEventListener("click",()=>{
-    submitMultipleAnswer(session);
-  });
-  els.choicesContainer.appendChild(confirmBtn);
-
   if(els.iDontKnowBtn){
     els.iDontKnowBtn.disabled=false;
     els.iDontKnowBtn.style.opacity="1";
@@ -334,6 +355,10 @@ export function submitMultipleAnswer(session,{forcedDontKnow=false}={}){
   if(!presentedQ) return;
 
   const userSel = getMultiSelection(session);
+  // C-2: 未選択で確定した場合は「わからない」扱い
+  if(!forcedDontKnow && userSel.length===0){
+    forcedDontKnow = true;
+  }
   const correctSet = new Set(
     Array.isArray(presentedQ.correctIndexes)
       ? presentedQ.correctIndexes
@@ -367,6 +392,11 @@ export function submitMultipleAnswer(session,{forcedDontKnow=false}={}){
   if(els.iDontKnowBtn){
     els.iDontKnowBtn.disabled=true;
     els.iDontKnowBtn.style.opacity=".55";
+  }
+
+  if(state.settings.progressMode==="manual"){
+    els.nextQuestionBtn.textContent = "次の問題へ →";
+    els.nextQuestionBtn.style.display = "inline-flex";
   }
 
   if(els.result){
@@ -407,13 +437,13 @@ export function submitMultipleAnswer(session,{forcedDontKnow=false}={}){
       nextQuestionMultiple(session);
     },delayMs);
   } else {
-    els.nextQuestionBtn.style.display="inline-flex";
     els.nextQuestionBtn.focus();
   }
 }
 
 export function nextQuestionMultiple(session){
   state.currentIndex++;
+  if(session) session.currentIndex = state.currentIndex;
   if(state.currentIndex>=state.questions.length){
     showResult();
     return;

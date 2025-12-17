@@ -2,6 +2,7 @@
 // Phase 0 では入力ハンドラを共通形に揃える。
 import { els } from "../../domRefs.js";
 import { state } from "../../state.js";
+import { showScreen } from "../../utils.js";
 import {
   renderQuestionMultiple,
   submitMultipleAnswer,
@@ -49,7 +50,40 @@ export function onDontKnow(session){
 
 export function onNext(session){
   if(!session) return false;
+  if(!state.answered){
+    submitMultipleAnswer(session);
+    return true;
+  }
   nextMultiple(session);
+  return true;
+}
+
+export function retryWrongOnly(session){
+  if(state.wrongQuestions.length===0) return false;
+  const questions = [...state.wrongQuestions].map(q=>({ ...q }));
+
+  const newSession = {
+    mode: "multiple",
+    genre: state.currentGenre,
+    questions,
+    currentIndex: 0,
+    correctCount: 0,
+    finished: false,
+    answers: [],
+    limit: questions.length,
+    retryWrongOnly: true
+  };
+
+  state.activeSession = newSession;
+  state.questions = questions;
+  state.currentIndex = 0;
+  state.correctCount = 0;
+  state.wrongQuestions = [];
+  state.correctQuestions = [];
+  state.isRetryWrongMode = true;
+
+  showScreen("quizScreen");
+  renderQuestionMultiple(newSession);
   return true;
 }
 
@@ -58,6 +92,7 @@ export default {
   onKeyDown,
   onDontKnow,
   onNext,
+  retryWrongOnly,
   renderQuestionMultiple,
   submitMultipleAnswer,
   nextMultiple
