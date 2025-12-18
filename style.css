@@ -157,7 +157,18 @@ body[data-theme="dark"] .choice.correct { background:#14532d; }
 .choice.wrong { border-color:var(--c-warn); background:#fee2e2; }
 body[data-theme="dark"] .choice.wrong { background:#4c1d1d; }
 @media (prefers-color-scheme: dark){ body[data-theme="auto"] .choice.wrong { background:#4c1d1d; } }
-.choice.selected { border-color: var(--c-accent-hover); }
+.choice.selected:not(.correct):not(.wrong),
+.choice[aria-pressed="true"]:not(.correct):not(.wrong) {
+    border-color: var(--c-accent-hover);
+    background:#f0f7ff;
+    box-shadow:0 0 0 3px var(--c-accent-hover), 0 3px 7px rgba(0,0,0,.08);
+}
+body[data-theme="dark"] .choice.selected:not(.correct):not(.wrong),
+body[data-theme="dark"] .choice[aria-pressed="true"]:not(.correct):not(.wrong) { background:#334155; }
+@media (prefers-color-scheme: dark){
+  body[data-theme="auto"] .choice.selected:not(.correct):not(.wrong),
+  body[data-theme="auto"] .choice[aria-pressed="true"]:not(.correct):not(.wrong) { background:#334155; }
+}
 .choice .badge {
     position:absolute; top:6px; left:8px; font-size:12px; background:var(--c-accent); color:#fff;
     padding:2px 6px; border-radius:50px; letter-spacing:.5px;
@@ -380,7 +391,7 @@ body[data-theme="dark"] .btn.pf-down:hover{ background:#334155; }
 
 .genre-menu-btn {
   position: absolute;
-  top: 4px;
+  top: 50%;
   right: 6px;
   width: 36px;
   height: 36px;
@@ -398,12 +409,30 @@ body[data-theme="dark"] .btn.pf-down:hover{ background:#334155; }
   line-height: 1;
   font-size: 18px;
   user-select: none;
+  transform: translateY(-50%);
 }
-.genre-menu-btn:hover { background:#f3f6fc; }
+.genre-menu-btn:hover {
+  background: var(--c-accent);
+  color:#fff;
+  border-color: var(--c-accent);
+}
 body[data-theme="dark"] .genre-menu-btn { background:#1e293b; color:var(--c-text); border-color:#334155; }
-body[data-theme="dark"] .genre-menu-btn:hover { background:#263445; }
-.genre-menu-btn:active { transform:translateY(1px); }
+body[data-theme="dark"] .genre-menu-btn:hover {
+  background:#334155;
+  color:var(--c-text);
+  border-color: var(--c-border);
+}
+.genre-menu-btn:active { transform: translateY(-50%) translateY(1px); }
 .genre-menu-btn:focus-visible { outline:3px solid #93c5fd; outline-offset:2px; }
+
+@media (prefers-color-scheme: dark){
+  body[data-theme="auto"] .genre-menu-btn { background:#1e293b; color:var(--c-text); border-color:#334155; }
+  body[data-theme="auto"] .genre-menu-btn:hover {
+    background:#334155;
+    color:var(--c-text);
+    border-color: var(--c-border);
+  }
+}
 @media (max-width:560px){
   .genre-menu-btn { width:40px; height:40px; min-width:40px; min-height:40px; font-size:20px; }
 }
@@ -461,15 +490,20 @@ body.is-mobile-os #manageScreen #genreFilterSelect {
   cursor: pointer;
 }
 .kebab-btn:hover,
-.more-btn:hover,
-.genre-menu-btn:hover {
+.more-btn:hover {
   background: var(--c-bg);
   border-color: var(--c-accent);
 }
 /* 親の hover で子が青くならないように（よくある副作用の打ち消し） */
-.genre-btn:hover .kebab-btn,
-.genre-btn:hover .more-btn,
-.genre-btn:hover .genre-menu-btn {
+.genre-btn:hover .kebab-btn:not(:hover),
+.genre-btn:hover .more-btn:not(:hover),
+.genre-btn:hover .genre-menu-btn:not(:hover) {
   background: var(--c-panel);
   border-color: var(--c-border);
+  color: var(--c-text-sub);
+}
+
+/* 三点ホバー時は親ボタンの hover 色を打ち消す（親が青くならない） */
+.genre-btn:has(.genre-menu-btn:hover):hover {
+  background: var(--c-panel);
 }

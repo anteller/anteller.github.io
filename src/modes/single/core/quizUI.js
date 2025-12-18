@@ -334,8 +334,11 @@ export function renderQuestionMultiple(session){
       setMultiSelection(session,[...currentSel].sort((a,b)=>a-b));
       // 選択中視覚的反映（採点前は色のみ）
       el.classList.toggle("selected", currentSel.has(idx));
+      el.setAttribute("aria-pressed", currentSel.has(idx)? "true" : "false");
     });
-    if(currentSel.has(i)) btn.classList.add("selected");
+    const isSelected = currentSel.has(i);
+    if(isSelected) btn.classList.add("selected");
+    btn.setAttribute("aria-pressed", isSelected? "true" : "false");
     els.choicesContainer.appendChild(btn);
   });
 

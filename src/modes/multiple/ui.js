@@ -22,13 +22,25 @@ export function onKeyDown(e, session){
   if(!isQuizScreenActive()) return false;
   if(!session) return false;
 
+  // 入力中の Enter/Space は奪わない
+  const target = e.target;
+  if(
+    target &&
+    (target.isContentEditable ||
+      /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
+  ){
+    return false;
+  }
+
   if(e.key === "Enter" || e.key === " "){
-    if(!state.answered){
-      submitMultipleAnswer(session);
-    } else {
-      nextMultiple(session);
-    }
-    return true;
+    // 「回答確定」ボタンと同じ条件（手動モードでボタンが出ている時）に合わせる。
+    if(state.settings.progressMode !== "manual") return false;
+    if(els.nextQuestionBtn?.style?.display !== "inline-flex") return false;
+
+    // ボタンの既定クリック(Enter/Space)と二重実行になるのを防ぐ
+    e.preventDefault();
+    e.stopPropagation();
+    return onNext(session);
   }
 
   if(state.answered) return false;

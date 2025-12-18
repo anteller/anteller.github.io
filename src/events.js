@@ -233,6 +233,7 @@ export function bindEvents(){
 
   els.manageBackBtn2?.addEventListener("click", ()=>showScreen("genreSelect"));
   els.genreManageBtn?.addEventListener("click", ()=>showGenreManage());
+  els.genreManageBackBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
 
   /* 戻り/再挑戦 */
   els.qCountCancelBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
@@ -293,6 +294,15 @@ export function bindEvents(){
   });
 
   /* 管理画面操作 */
+  els.resetStatsBtn?.addEventListener("click", ()=>resetGenreStats());
+
+  els.flaggedFilterBtn?.addEventListener("click", ()=>{
+    state.manageFlaggedOnly = !state.manageFlaggedOnly;
+    els.flaggedFilterBtn.classList.toggle("active", state.manageFlaggedOnly);
+    els.flaggedFilterBtn.textContent = state.manageFlaggedOnly ? "★ 要チェックのみ" : "☆ 要チェックのみ";
+    rebuildManageList();
+  });
+
   els.manageAddBtn?.addEventListener("click", ()=>{
     const val = els.genreFilterSelect ? els.genreFilterSelect.value : state.currentGenre;
     if(val === "__ALL__"){
