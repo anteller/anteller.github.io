@@ -713,11 +713,20 @@ export function exportCurrentGenre(){
   if(filterVal==="__ALL__"){ showToast("「(すべて)」表示中はエクスポート不可"); return; }
   const g=filterVal;
   if(!g || !state.quizzes[g]){ showToast("ジャンル不明"); return; }
+
+  const includeStats = confirm(
+    "エクスポート時に統計（正答率/既知率）を引き継ぎますか？\nOK=はい / キャンセル=いいえ（統計をリセットしてエクスポート）"
+  );
+
+  const questions = clone(state.quizzes[g]);
+  if(!includeStats){
+    questions.forEach(q=>resetStatsForDuplicate(q));
+  }
   const data={
     __version:DATA_VERSION,
     mode: state.appMode,
     genre:g,
-    questions:clone(state.quizzes[g])
+    questions
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
   const filename=buildGenreExportFileName(g);
