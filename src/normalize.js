@@ -82,10 +82,12 @@ function normalizeMultiple(r){
 
 /* ----- flashcards ----- */
 function normalizeFlashcard(r){
+  const q = typeof r.q === "string" ? r.q.trim() : (r.question || "");
   const front = typeof r.front==="string"? r.front.trim(): "";
   const back  = typeof r.back==="string"? r.back.trim(): "";
   return {
     id: baseId(r.id),
+    q,
     front,
     back,
     exp: typeof r.exp === "string" ? r.exp : "",
@@ -93,7 +95,8 @@ function normalizeFlashcard(r){
     stats: r.stats && typeof r.stats==="object"
       ? { seen: r.stats.seen||0, known: r.stats.known||0 }
       : { seen:0, known:0 },
-    flagged: !!r.flagged
+    flagged: !!r.flagged,
+    priorityFactor: typeof r.priorityFactor === "number" ? r.priorityFactor : 1
   };
 }
 

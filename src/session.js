@@ -16,6 +16,9 @@ export function startQuizMode(genre, opts={}){
     state.questions = session.questions || session.cards || [];
     state.currentIndex = 0;
     state.correctCount = 0;
+    state.wrongQuestions = [];
+    state.correctQuestions = [];
+    state.isRetryWrongMode = false;
     state.answered = false;
     state.lastSession = {
       genre,

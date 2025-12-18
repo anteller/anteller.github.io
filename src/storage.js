@@ -10,6 +10,7 @@ import { normalizeQuestion } from "./normalize.js";
 import { clone } from "./utils.js";
 import { defaultQuizzes } from "./defaultQuizzes.js";
 import { defaultQuizzesMultiple } from "./defaultQuizzesMultiple.js";
+import { defaultFlashcards } from "./defaultFlashcards.js";
 /**
  * 既存の migrateQuizzes を保持（内部データ正規化）
  */
@@ -76,7 +77,7 @@ export function safeLoadQuizzes(mode){
       }
       const resolvedMode = mode || state.appMode || state.settings?.appMode || APP_MODES.SINGLE;
       if (resolvedMode === APP_MODES.MULTIPLE) return migrateQuizzes(clone(defaultQuizzesMultiple));
-      if (resolvedMode === APP_MODES.FLASHCARDS) return { __version: DATA_VERSION };
+      if (resolvedMode === APP_MODES.FLASHCARDS) return migrateQuizzes(clone(defaultFlashcards));
       return migrateQuizzes(clone(defaultQuizzes));
     }
 
@@ -91,7 +92,7 @@ export function safeLoadQuizzes(mode){
     console.error("safeLoadQuizzes error", err);
     const resolvedMode = mode || state.appMode || state.settings?.appMode || APP_MODES.SINGLE;
     if (resolvedMode === APP_MODES.MULTIPLE) return migrateQuizzes(clone(defaultQuizzesMultiple));
-    if (resolvedMode === APP_MODES.FLASHCARDS) return { __version: DATA_VERSION };
+    if (resolvedMode === APP_MODES.FLASHCARDS) return migrateQuizzes(clone(defaultFlashcards));
     return migrateQuizzes(clone(defaultQuizzes));
   }
 }

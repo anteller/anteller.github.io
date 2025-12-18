@@ -24,6 +24,7 @@ import { normalizeQuestion } from "../../../normalize.js";
 import { recordUndo } from "../../../undo.js";
 import { defaultQuizzes } from "../../../defaultQuizzes.js";
 import { defaultQuizzesMultiple } from "../../../defaultQuizzesMultiple.js";
+import { defaultFlashcards } from "../../../defaultFlashcards.js";
 import multipleManage from "../../multiple/manage.js";
 import flashManage from "../../flashcards/manage.js";
 
@@ -683,21 +684,23 @@ export function resetAllData(){
     SETTINGS_KEY
   ].forEach(k=>{ try{ localStorage.removeItem(k); }catch{} });
 
-  // single/multiple はデフォルト投入。flashcards は空で開始。
+  // single/multiple/flashcards はデフォルト投入。
   const freshSingle = migrateQuizzes(clone(defaultQuizzes));
   const freshMultiple = migrateQuizzes(clone(defaultQuizzesMultiple));
+  const freshFlash = migrateQuizzes(clone(defaultFlashcards));
 
   const orderSingle = Object.keys(freshSingle).filter(k=>!k.startsWith("__"));
   const orderMultiple = Object.keys(freshMultiple).filter(k=>!k.startsWith("__"));
+  const orderFlash = Object.keys(freshFlash).filter(k=>!k.startsWith("__"));
 
   try{ localStorage.setItem(STORAGE_KEY_SINGLE, JSON.stringify(freshSingle)); }catch{}
   try{ localStorage.setItem(STORAGE_KEY_MULTIPLE, JSON.stringify(freshMultiple)); }catch{}
-  try{ localStorage.setItem(STORAGE_KEY_FLASH, JSON.stringify({ __version: DATA_VERSION })); }catch{}
+  try{ localStorage.setItem(STORAGE_KEY_FLASH, JSON.stringify(freshFlash)); }catch{}
 
   // genreOrder も各モードに保存（再読み込み後の表示順を安定させる）
   try{ localStorage.setItem(GENRE_ORDER_KEY_SINGLE, JSON.stringify(orderSingle)); }catch{}
   try{ localStorage.setItem(GENRE_ORDER_KEY_MULTIPLE, JSON.stringify(orderMultiple)); }catch{}
-  try{ localStorage.setItem(GENRE_ORDER_KEY_FLASH, JSON.stringify([])); }catch{}
+  try{ localStorage.setItem(GENRE_ORDER_KEY_FLASH, JSON.stringify(orderFlash)); }catch{}
 
   // モード/モジュール/イベント等を含む状態を確実に揃えるため、ここでリロードする
   showToast("初期化しました。再読み込みします…");
