@@ -49,6 +49,6 @@ export function startQuizMode(genre,{limit=null,lowAccuracy=false,flaggedOnly=fa
   state.wrongQuestions = [];
   state.correctQuestions = [];
   state.isRetryWrongMode = false;
-  state.lastSession = { genre, limit, lowAccuracy, flaggedOnly };
+  state.lastSession = { genre, limit, lowAccuracy, flaggedOnly, mode: state.appMode || "single" };
   return true;
 }

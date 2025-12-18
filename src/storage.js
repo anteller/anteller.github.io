@@ -27,7 +27,7 @@ export function migrateQuizzes(data){
 
 /* モードに対応した quizzes の localStorage キーを返す（既定: single） */
 function keyForMode(mode) {
-  const m = mode || (state.settings && state.settings.appMode) || APP_MODES.SINGLE;
+  const m = mode || state.appMode || (state.settings && state.settings.appMode) || APP_MODES.SINGLE;
   switch (m) {
     case APP_MODES.MULTIPLE: return STORAGE_KEY_MULTIPLE;
     case APP_MODES.FLASHCARDS: return STORAGE_KEY_FLASH;
@@ -38,7 +38,7 @@ function keyForMode(mode) {
 
 /* モードに対応した genreOrder の localStorage キーを返す（既定: single） */
 function keyForGenreOrder(mode){
-  const m = mode || (state.settings && state.settings.appMode) || APP_MODES.SINGLE;
+  const m = mode || state.appMode || (state.settings && state.settings.appMode) || APP_MODES.SINGLE;
   switch(m){
     case APP_MODES.MULTIPLE: return GENRE_ORDER_KEY_MULTIPLE;
     case APP_MODES.FLASHCARDS: return GENRE_ORDER_KEY_FLASH;
@@ -74,7 +74,7 @@ export function safeLoadQuizzes(mode){
           }
         }
       }
-      const resolvedMode = mode || state.settings?.appMode || APP_MODES.SINGLE;
+      const resolvedMode = mode || state.appMode || state.settings?.appMode || APP_MODES.SINGLE;
       if (resolvedMode === APP_MODES.MULTIPLE) return migrateQuizzes(clone(defaultQuizzesMultiple));
       if (resolvedMode === APP_MODES.FLASHCARDS) return { __version: DATA_VERSION };
       return migrateQuizzes(clone(defaultQuizzes));
@@ -89,7 +89,7 @@ export function safeLoadQuizzes(mode){
     return parsed;
   }catch(err){
     console.error("safeLoadQuizzes error", err);
-    const resolvedMode = mode || state.settings?.appMode || APP_MODES.SINGLE;
+    const resolvedMode = mode || state.appMode || state.settings?.appMode || APP_MODES.SINGLE;
     if (resolvedMode === APP_MODES.MULTIPLE) return migrateQuizzes(clone(defaultQuizzesMultiple));
     if (resolvedMode === APP_MODES.FLASHCARDS) return { __version: DATA_VERSION };
     return migrateQuizzes(clone(defaultQuizzes));
@@ -98,11 +98,11 @@ export function safeLoadQuizzes(mode){
 
 /**
  * saveQuizzes([mode])
- * - mode を渡せばモード別キーへ保存できる。引数省略時は現在の state.settings.appMode を使う。
+ * - mode を渡せばモード別キーへ保存できる。引数省略時は state.appMode を優先して使う。
  */
 export function saveQuizzes(mode){
   try{
-    const key = keyForMode(mode || state.settings?.appMode);
+    const key = keyForMode(mode || state.appMode || state.settings?.appMode);
     localStorage.setItem(key, JSON.stringify(state.quizzes));
   }catch(err){
     console.error("saveQuizzes failed", err);
@@ -181,7 +181,7 @@ export function loadGenreOrder(mode){
 
 export function saveGenreOrder(order, mode){
   try{
-    const key = keyForGenreOrder(mode || state.settings?.appMode);
+    const key = keyForGenreOrder(mode || state.appMode || state.settings?.appMode);
     const resolvedOrder = Array.isArray(order) ? order : (Array.isArray(state.genreOrder) ? state.genreOrder : []);
     localStorage.setItem(key, JSON.stringify(resolvedOrder));
   }catch(err){

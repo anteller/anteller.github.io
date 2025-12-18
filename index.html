@@ -10,7 +10,7 @@
 <body data-theme="auto">
 <div class="container">
   <h1>クイズ集</h1>
-  <div id="modeToggle" class="mode-toggle" style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
+  <div id="modeToggle" class="mode-toggle">
     <button id="modeSingleBtn" class="btn small mode-btn" type="button" data-mode="single">択一</button>
     <button id="modeMultipleBtn" class="btn small mode-btn" type="button" data-mode="multiple">複数解答</button>
     <button id="modeFlashBtn" class="btn small mode-btn" type="button" data-mode="flashcards">単語帳</button>
@@ -50,7 +50,7 @@
     <div class="question" id="question"></div>
     <div class="choices" id="choicesContainer" role="listbox" aria-label="選択肢"></div>
     <div class="dontknow-wrap">
-      <button type="button" id="iDontKnowBtn" class="btn small" aria-label="わからない（不正解として扱う）">わからない</button>
+      <button type="button" id="iDontKnowBtn" class="btn small" aria-label="わからない">わからない</button>
     </div>
     <div class="result-msg" id="result" aria-live="polite"></div>
     <div class="result-sub" id="subResult" aria-live="polite"></div>
@@ -99,14 +99,14 @@
         <select id="genreInput"></select>
       </label>
       <label class="form-label">
-        問題文:
+        <span id="questionLabelText">問題文:</span>
         <input type="text" id="questionInput" required placeholder="例: 5 + 7 = ?">
       </label>
       <fieldset>
-        <legend>選択肢（2〜6個）</legend>
+        <legend id="choicesLegend">選択肢（2〜6個）</legend>
         <div id="choicesEditArea"></div>
         <button type="button" id="addChoiceBtn" class="add-choice-btn">＋ 選択肢を追加</button>
-        <p style="font-size:11px;color:var(--c-text-sub);margin:6px 0 0;">ラジオボタンで正解を選択してください</p>
+        <p id="choicesHelpText" style="font-size:11px;color:var(--c-text-sub);margin:6px 0 0;">ラジオボタンで正解を選択してください</p>
       </fieldset>
       <label class="form-label">
         解説（任意）:
@@ -214,15 +214,15 @@
     </div>
     <div class="manage-controls">
       <div>
-        <label class="genre-filter-label" style="font-size:12px;">ジャンル</label>
+        <label class="genre-filter-label" for="genreFilterSelect" style="font-size:12px;">ジャンル</label>
         <select id="genreFilterSelect"></select>
         <div style="margin-top:8px;">
           <button class="btn small" id="manageAddBtn" type="button">＋ 新規追加</button>
         </div>
       </div>
       <div>
-        <label style="font-size:12px;">検索（タグ / 問題文 / 選択肢）</label>
-        <input type="text" id="tagFilterInput" placeholder="例: 比較 / want / to V">
+        <label for="tagFilterInput" style="font-size:12px;">検索（タグ / 問題文 / 選択肢）</label>
+        <input type="search" id="tagFilterInput" placeholder="例: 比較 / want / to V">
       </div>
       <div>
         <label style="font-size:12px;">要チェック</label>

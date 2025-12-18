@@ -48,6 +48,9 @@ function updateModeButtonsUI() {
   els.modeSingleBtn.classList.toggle("active", mode === "single");
   els.modeMultipleBtn.classList.toggle("active", mode === "multiple");
   els.modeFlashBtn.classList.toggle("active", mode === "flashcards");
+  els.modeSingleBtn.setAttribute("aria-pressed", String(mode === "single"));
+  els.modeMultipleBtn.setAttribute("aria-pressed", String(mode === "multiple"));
+  els.modeFlashBtn.setAttribute("aria-pressed", String(mode === "flashcards"));
   if(els.currentModeLabel){
     els.currentModeLabel.textContent =
       mode === "single" ? "択一" :
@@ -228,7 +231,6 @@ export function bindEvents(){
     showManageScreen(state.currentGenre);
   });
 
-  els.manageBackBtn?.addEventListener("click", ()=>showScreen("genreSelect"));
   els.manageBackBtn2?.addEventListener("click", ()=>showScreen("genreSelect"));
   els.genreManageBtn?.addEventListener("click", ()=>showGenreManage());
 

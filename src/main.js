@@ -31,12 +31,10 @@ async function init() {
   // 6) モードモジュールロード（将来動的ロードに切り替えやすい）
   try {
     const modeId = state.appMode || DEFAULT_MODE_ID;
-    state.currentMode = modeId;
     state.currentModeModule = await loadMode(modeId);
     console.info("loaded mode:", modeId, state.currentModeModule && state.currentModeModule.title);
   } catch (err) {
     console.warn("mode load failed; falling back to single", err);
-    state.currentMode = DEFAULT_MODE_ID;
     state.currentModeModule = await loadMode(DEFAULT_MODE_ID);
   }
 

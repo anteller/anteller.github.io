@@ -10,7 +10,7 @@ export function toggleFlag(genre,id){
   const q=arr.find(x=>x.id===id);
   if(!q) return;
   q.flagged=!q.flagged;
-  saveQuizzes();
+  saveQuizzes(state.appMode);
   return q.flagged;
 }
 
@@ -115,7 +115,7 @@ export function handleAnswer(idx,forcedDontKnow=false){
     if(!orig.stats) orig.stats={c:0,t:0};
     orig.stats.t+=1;
     if(isCorrect && !forcedDontKnow) orig.stats.c+=1;
-    saveQuizzes();
+    saveQuizzes(state.appMode);
   }
   const choiceEls=[...els.choicesContainer.querySelectorAll(".choice")];
   choiceEls.forEach(c=>c.disabled=true);
@@ -174,7 +174,7 @@ export function adjustPriorityFactor(mult){
   if(pf<0.2) pf=0.2;
   if(pf>5) pf=5;
   orig.priorityFactor=parseFloat(pf.toFixed(4));
-  saveQuizzes();
+  saveQuizzes(state.appMode);
   showToast(`出題率: x${orig.priorityFactor.toFixed(2)}`);
   const lowMode=!!state.lastSession.lowAccuracy;
   if(lowMode && els.priorityIndicator) els.priorityIndicator.textContent="x"+orig.priorityFactor.toFixed(2);
@@ -376,7 +376,7 @@ export function submitMultipleAnswer(session,{forcedDontKnow=false}={}){
     if(!orig.stats) orig.stats={c:0,t:0};
     orig.stats.t+=1;
     if(isCorrect && !forcedDontKnow) orig.stats.c+=1;
-    saveQuizzes();
+    saveQuizzes(state.appMode);
   }
 
   // 選択肢の採点表示

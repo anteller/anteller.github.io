@@ -66,6 +66,13 @@ function applyFlashcardsFormMode(){
     els.questionInput.placeholder = "";
   }
   if(els.addChoiceBtn) els.addChoiceBtn.style.display = "none";
+
+  const qLabel = document.getElementById("questionLabelText");
+  if(qLabel) qLabel.textContent = "（単語帳では未使用）:";
+  const legend = document.getElementById("choicesLegend");
+  if(legend) legend.textContent = "カード内容";
+  const help = document.getElementById("choicesHelpText");
+  if(help) help.textContent = "表と裏を入力してください";
 }
 function applyNonFlashcardsFormMode(){
   if(els.questionInput){
@@ -74,6 +81,17 @@ function applyNonFlashcardsFormMode(){
     if(!els.questionInput.placeholder) els.questionInput.placeholder = "例: 5 + 7 = ?";
   }
   if(els.addChoiceBtn) els.addChoiceBtn.style.display = "";
+
+  const qLabel = document.getElementById("questionLabelText");
+  if(qLabel) qLabel.textContent = "問題文:";
+  const legend = document.getElementById("choicesLegend");
+  if(legend) legend.textContent = "選択肢（2〜6個）";
+  const help = document.getElementById("choicesHelpText");
+  if(help){
+    help.textContent = (state.appMode === "multiple")
+      ? "チェックで正解を1つ以上選択してください"
+      : "ラジオボタンで正解を選択してください";
+  }
 }
 
 /* ========== 内部ユーティリティ ========== */
@@ -141,7 +159,7 @@ function toggleFlag(genre,id){
   const q=arr.find(x=>x.id===id);
   if(!q) return;
   q.flagged=!q.flagged;
-  saveQuizzes();
+  saveQuizzes(state.appMode);
   return q.flagged;
 }
 
@@ -472,7 +490,7 @@ export function onManageListClick(e){
         if(pf<0.2) pf=0.2;
         if(pf>5) pf=5;
         q.priorityFactor=parseFloat(pf.toFixed(4));
-        saveQuizzes();
+        saveQuizzes(state.appMode);
         const badge=e.currentTarget.querySelector(`.pf-indicator-badge[data-id='${id}'][data-genre='${g}']`);
         if(badge) badge.textContent="x"+q.priorityFactor.toFixed(2);
         showToast("PF: x"+q.priorityFactor.toFixed(2));
@@ -530,7 +548,7 @@ export function applyBulkTag(rawTags){
     if(changed) updated++;
   });
   if(updated){
-    saveQuizzes();
+    saveQuizzes(state.appMode);
     showToast(`タグ付与: ${updated}件`);
     rebuildManageList();
   } else {
@@ -542,7 +560,7 @@ export function moveGenre(g,dir){
   const idx=state.genreOrder.indexOf(g); if(idx===-1) return;
   const n=idx+dir; if(n<0||n>=state.genreOrder.length) return;
   [state.genreOrder[idx],state.genreOrder[n]]=[state.genreOrder[n],state.genreOrder[idx]];
-  saveGenreOrder();
+  saveGenreOrder(state.genreOrder, state.appMode);
   rebuildGenreButtons();
   rebuildManageList();
   rebuildGenreFilterSelect(els.genreFilterSelect?.value);
@@ -554,7 +572,8 @@ export function deleteGenre(g){
   const idx=state.genreOrder.indexOf(g);
   delete state.quizzes[g];
   state.genreOrder=state.genreOrder.filter(x=>x!==g);
-  saveQuizzes(); saveGenreOrder();
+  saveQuizzes(state.appMode);
+  saveGenreOrder(state.genreOrder, state.appMode);
   rebuildGenreButtons(); buildGenreManageList();
   showToast(`ジャンル「${g}」削除`);
   recordUndo({
@@ -577,7 +596,8 @@ export function renameGenre(oldName){
   delete state.quizzes[oldName];
   state.genreOrder=state.genreOrder.map(g=>g===oldName? newName:g);
   if(state.currentGenre===oldName) state.currentGenre=newName;
-  saveQuizzes(); saveGenreOrder();
+  saveQuizzes(state.appMode);
+  saveGenreOrder(state.genreOrder, state.appMode);
   rebuildGenreButtons(); buildGenreManageList();
   showToast("名称を変更しました");
 }
@@ -641,7 +661,7 @@ export function resetGenreStats(){
     q.stats.c = 0;
     q.stats.t = 0;
   });
-  saveQuizzes();
+  saveQuizzes(state.appMode);
   rebuildManageList();
   showToast("統計をリセットしました");
   recordUndo({ type:"stats-reset", genre:g, prevStats });
@@ -691,7 +711,12 @@ export function exportCurrentGenre(){
   if(filterVal==="__ALL__"){ showToast("「(すべて)」表示中はエクスポート不可"); return; }
   const g=filterVal;
   if(!g || !state.quizzes[g]){ showToast("ジャンル不明"); return; }
-  const data={__version:DATA_VERSION, genre:g, questions:clone(state.quizzes[g])};
+  const data={
+    __version:DATA_VERSION,
+    mode: state.appMode,
+    genre:g,
+    questions:clone(state.quizzes[g])
+  };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
   const filename=buildGenreExportFileName(g);
   const a=document.createElement("a");
@@ -713,6 +738,15 @@ export function importGenreFromFile(file){
       if(filterVal==="__ALL__"){ showToast("「(すべて)」表示中はインポート先不明"); return; }
       const current=filterVal;
       if(!current){ showToast("ジャンル未選択"); return; }
+
+      const fileMode = (parsed && typeof parsed==="object" && typeof parsed.mode==="string")
+        ? parsed.mode
+        : null;
+      if(fileMode && fileMode !== state.appMode){
+        const ok = confirm(`このファイルは「${fileMode}」モードのデータです。現在は「${state.appMode}」です。取り込みますか？`);
+        if(!ok) return;
+      }
+
       let questions=null;
       if(parsed && typeof parsed==="object" && Array.isArray(parsed.questions) && typeof parsed.genre==="string"){
         if(parsed.genre!==current){
@@ -726,17 +760,76 @@ export function importGenreFromFile(file){
         showToast("有効な問題配列なし");
         return;
       }
+
       const normalized=questions.map(q=>normalizeQuestion(q));
-      const existIds=new Set(state.quizzes[current].map(q=>q.id));
-      normalized.forEach(q=>{ if(existIds.has(q.id)) q.id=createId(); });
+      const converted=[];
+      let incompatibleCount = 0;
+      let convertedCount = 0;
+
+      normalized.forEach(q=>{
+        if(state.appMode === "flashcards"){
+          if(isFlashcard(q)){
+            converted.push(q);
+          } else {
+            incompatibleCount++;
+          }
+          return;
+        }
+
+        // single/multiple は flashcards を拒否
+        if(isFlashcard(q)){
+          incompatibleCount++;
+          return;
+        }
+
+        if(state.appMode === "multiple"){
+          // single 形式 → multiple へ安全変換
+          if(!Array.isArray(q.correctIndexes)){
+            const ans = Number.isInteger(q.answer) ? q.answer : 0;
+            q.correctIndexes = [ans];
+            delete q.answer;
+            convertedCount++;
+          }
+          converted.push(q);
+          return;
+        }
+
+        // single
+        if(Array.isArray(q.correctIndexes)){
+          if(q.correctIndexes.length === 1){
+            q.answer = q.correctIndexes[0];
+            delete q.correctIndexes;
+            convertedCount++;
+            converted.push(q);
+          } else {
+            incompatibleCount++;
+          }
+          return;
+        }
+        converted.push(q);
+      });
+
+      if(incompatibleCount>0){
+        showToast(`現在のモードでは取り込めないデータが含まれます (${incompatibleCount}件)`);
+        return;
+      }
+
+      const existIds=new Set((state.quizzes[current]||[]).map(q=>q.id));
+      converted.forEach(q=>{ if(existIds.has(q.id)) q.id=createId(); });
+
       if(confirm("インポート: OK=置換 / キャンセル=追加")){
-        state.quizzes[current]=normalized;
+        state.quizzes[current]=converted;
         showToast("インポート(置換) 完了");
       } else {
-        state.quizzes[current].push(...normalized);
+        state.quizzes[current].push(...converted);
         showToast("インポート(追加) 完了");
       }
-      saveQuizzes(); rebuildGenreButtons(); rebuildManageList();
+      if(convertedCount>0){
+        showToast(`形式変換: ${convertedCount}件`, 1800);
+      }
+      saveQuizzes(state.appMode);
+      rebuildGenreButtons();
+      rebuildManageList();
     }catch(e){
       console.error(e);
       showToast("インポート失敗");
@@ -951,7 +1044,7 @@ export function handleAddQuestion(stay=false){
       priorityFactor:1
     });
   }
-  saveQuizzes();
+  saveQuizzes(state.appMode);
   showToast("追加しました");
   rebuildGenreButtons();
   if(stay){
@@ -999,7 +1092,7 @@ export function handleSaveEdit(){
     if(ans<0 || ans>=data.choices.length) ans=0;
     arr[state.editingIndex]={...old,q:data.question,choices:data.choices,answer:ans,exp:data.exp,tags:data.tags};
   }
-  saveQuizzes();
+  saveQuizzes(state.appMode);
   showToast("更新しました");
   clearAddForm();
   showManageScreen(genre);
@@ -1035,7 +1128,7 @@ function handleQuestionAction(act,id,genre){
       if(confirm("この問題を削除しますか？")){
         const deleted=[{index:idx,question:clone(arr[idx])}];
         arr.splice(idx,1);
-        saveQuizzes();
+        saveQuizzes(state.appMode);
         rebuildGenreButtons();
         rebuildManageList();
         updateBulkUI();
@@ -1047,7 +1140,7 @@ function handleQuestionAction(act,id,genre){
       copy.id=createId();
       resetStatsForDuplicate(copy);
       arr.splice(idx+1,0,copy);
-      saveQuizzes();
+      saveQuizzes(state.appMode);
       rebuildManageList();
       rebuildGenreButtons();
       showToast("複製しました");
@@ -1074,7 +1167,7 @@ function bulkDelete(){
       arr.splice(item.index,1);
     });
   });
-  saveQuizzes();
+  saveQuizzes(state.appMode);
   state.selectedQuestionIds.clear();
   rebuildGenreButtons();
   rebuildManageList();

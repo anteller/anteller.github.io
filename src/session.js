@@ -58,7 +58,7 @@ export function startQuizMode(genre, opts={}){
   state.correctQuestions=[];
   state.isRetryWrongMode=false;
   state.answered=false;
-  state.lastSession={ genre, limit:limit || null, lowAccuracy:!!opts.lowAccuracy, flaggedOnly:!!opts.flaggedOnly, mode:"single" };
+  state.lastSession={ genre, limit:limit || null, lowAccuracy:!!opts.lowAccuracy, flaggedOnly:!!opts.flaggedOnly, mode: state.appMode || "single" };
   return true;
 }
 

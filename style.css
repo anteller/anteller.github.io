@@ -203,7 +203,7 @@ input[type=text], input[type=number], textarea, select {
     background:var(--c-panel); font-family:inherit; resize:vertical; color:var(--c-text);
 }
 textarea { min-height:90px; }
-input:focus, textarea:focus, select:focus { outline:2px solid #bfdbfe; border-color:var(--c-accent); }
+input:focus, textarea:focus, select:focus { outline:2px solid var(--c-accent); border-color:var(--c-accent); }
 body[data-theme="dark"] input,
 body[data-theme="dark"] textarea,
 body[data-theme="dark"] select,
@@ -413,33 +413,24 @@ body.is-mobile-os #manageScreen .genre-filter-label,
 body.is-mobile-os #manageScreen #genreFilterSelect {
   display:none !important;
 }
-.mode-toggle .mode-btn {
-  background: var(--c-button-bg, var(--c-surface));
-  border: 1px solid var(--c-border, #ccc);
+.mode-toggle .mode-btn{
+  background: var(--c-panel);
   color: var(--c-text);
+  border-color: var(--c-border);
   transition: background .15s, color .15s, border-color .15s;
 }
-.mode-toggle .mode-btn.active {
-  background: linear-gradient(135deg, var(--c-accent,#6366f1) 0%, var(--c-accent-soft,#818cf8) 100%);
+.mode-toggle .mode-btn:hover:not(.active){
+  background: var(--c-bg);
+}
+.mode-toggle .mode-btn.active{
+  background: var(--c-accent);
   color: #fff;
-  border-color: var(--c-accent,#6366f1);
-  box-shadow: 0 0 0 2px rgba(99,102,241,0.35);
+  border-color: var(--c-accent);
+  outline: 2px solid var(--c-accent);
+  outline-offset: 0;
 }
-@media (prefers-color-scheme: dark) {
-  .mode-toggle .mode-btn {
-    background: var(--c-surface, #1e1e24);
-    border-color: var(--c-border, #3c3c47);
-  }
-  .mode-toggle .mode-btn.active {
-    box-shadow: 0 0 0 2px rgba(99,102,241,0.55);
-  }
-}
-/* 選択肢行の共通色（複数選択モード） */
-.choice {
-  background: var(--c-surface);
-}
-[data-theme="dark"] .choice {
-  background: var(--c-surface-alt, #23232a);
+.mode-toggle .mode-btn.active:hover{
+  background: var(--c-accent-hover);
 }
 /* ジャンルボタンと三点ボタンの縦位置を中央に */
 .genre-row,
@@ -464,43 +455,21 @@ body.is-mobile-os #manageScreen #genreFilterSelect {
   width: 28px; height: 28px;
   border-radius: 50%;
   margin-left: 8px;
-  border: 1px solid var(--c-border, #d1d5db);
-  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  background: var(--c-panel);
   color: var(--c-text);
   cursor: pointer;
 }
 .kebab-btn:hover,
 .more-btn:hover,
 .genre-menu-btn:hover {
-  background: rgba(59,130,246,0.10);
-  border-color: var(--c-accent, #3b82f6);
+  background: var(--c-bg);
+  border-color: var(--c-accent);
 }
 /* 親の hover で子が青くならないように（よくある副作用の打ち消し） */
 .genre-btn:hover .kebab-btn,
 .genre-btn:hover .more-btn,
 .genre-btn:hover .genre-menu-btn {
-  background: var(--c-surface);
-  border-color: var(--c-border, #d1d5db);
-}
-
-/* ライトモードでモード切替タブが黒潰れする問題の明示色 */
-:root[data-theme="light"] .mode-toggle .btn,
-:root[data-theme="light"] .mode-toggle .mode-btn {
-  color: #111827;               /* text-gray-900 */
-  background: #ffffff;
-  border: 1px solid #e5e7eb;    /* gray-200 */
-}
-:root[data-theme="light"] .mode-toggle .btn.active,
-:root[data-theme="light"] .mode-toggle .mode-btn.active {
-  color: #ffffff;
-  background: #3b82f6;          /* blue-500 */
-  border-color: #3b82f6;
-}
-
-/* 複数選択の .choice（button化）をベース整形 */
-.choice {
-  transition: background-color .12s ease, border-color .12s ease;
-}
-.choice .badge {
-  font-size: 0.95em;
+  background: var(--c-panel);
+  border-color: var(--c-border);
 }
