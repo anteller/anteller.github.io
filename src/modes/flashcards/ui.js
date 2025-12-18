@@ -38,6 +38,9 @@ export function renderFlashcard(session){
   clearAutoTimer();
   state.answered = false;
 
+  const flashcardActions = document.getElementById("flashcardActions");
+  const dontKnowWrap = document.querySelector("#quizScreen .dontknow-wrap");
+
   if(els.explanationBox){
     els.explanationBox.classList.remove("visible");
     els.explanationBox.textContent = "";
@@ -52,6 +55,8 @@ export function renderFlashcard(session){
     if(els.choicesContainer) els.choicesContainer.innerHTML = "";
     if(els.nextQuestionBtn) els.nextQuestionBtn.style.display = "none";
     if(els.iDontKnowBtn) els.iDontKnowBtn.style.display = "none";
+    if(flashcardActions) flashcardActions.classList.add("hidden");
+    if(dontKnowWrap) dontKnowWrap.classList.remove("hidden");
     return;
   }
 
@@ -59,35 +64,66 @@ export function renderFlashcard(session){
     els.progress.textContent = `進捗: ${session.currentIndex+1} / ${session.cards.length}`;
   }
 
-  // 表/裏表示（questionに表示し、解説欄には出さない）
+  // 問題文（常に表示）: 管理画面の「問題文(任意)」(q)
   if(els.question){
-    els.question.textContent = session.showingBack ? card.back : card.front;
+    els.question.textContent = card.q || "";
   }
 
-  // flip ボタンだけ choicesContainer に置く（既存UX内に収める）
+  // カード面（表/裏）: choicesContainer に表示（クリックで反転）
   if(els.choicesContainer){
     els.choicesContainer.innerHTML = "";
-    const flipBtn = document.createElement("button");
-    flipBtn.type = "button";
-    flipBtn.className = "btn small flat";
-    flipBtn.textContent = session.showingBack ? "表へ戻す" : "裏を表示";
-    flipBtn.addEventListener("click", ()=>{
+
+    const cardBtn = document.createElement("button");
+    cardBtn.type = "button";
+    cardBtn.className = "choice";
+    cardBtn.setAttribute("aria-pressed", session.showingBack ? "true" : "false");
+    const frontText = (card.front || "").trim();
+    cardBtn.textContent = session.showingBack
+      ? (card.back || "")
+      : (frontText ? card.front : "裏を表示する");
+    cardBtn.addEventListener("click", ()=>{
       session.showingBack = !session.showingBack;
       renderFlashcard(session);
     });
-    els.choicesContainer.appendChild(flipBtn);
+    els.choicesContainer.appendChild(cardBtn);
+  }
+
+  // 裏表示時のみ解説を表示
+  if(els.explanationBox){
+    const exp = card.exp && String(card.exp).trim();
+    if(session.showingBack && exp){
+      els.explanationBox.textContent = exp;
+      els.explanationBox.classList.add("visible");
+    } else {
+      els.explanationBox.classList.remove("visible");
+      els.explanationBox.textContent = "";
+    }
   }
 
   // 既存ボタンを単語帳用に使う
+  if(dontKnowWrap) dontKnowWrap.classList.add("hidden");
+
   if(els.iDontKnowBtn){
     els.iDontKnowBtn.style.display = "inline-flex";
     els.iDontKnowBtn.disabled = false;
     els.iDontKnowBtn.style.opacity = "1";
     els.iDontKnowBtn.textContent = "知らなかった";
+    // クラス競合が起きないよう固定
+    els.iDontKnowBtn.className = "btn small danger";
   }
   if(els.nextQuestionBtn){
     els.nextQuestionBtn.style.display = "inline-flex";
     els.nextQuestionBtn.textContent = "知っていた";
+    // クラス競合が起きないよう固定
+    els.nextQuestionBtn.className = "btn small ok";
+  }
+
+  if(flashcardActions){
+    flashcardActions.classList.remove("hidden");
+    flashcardActions.innerHTML = "";
+    // 左: 知っていた / 右: 知らなかった
+    if(els.nextQuestionBtn) flashcardActions.appendChild(els.nextQuestionBtn);
+    if(els.iDontKnowBtn) flashcardActions.appendChild(els.iDontKnowBtn);
   }
 }
 
@@ -111,15 +147,25 @@ export function render(session){
 export function onKeyDown(e, session){
   if(!isQuizScreenActive()) return false;
   if(!session) return false;
+
+  if(e.key === "ArrowLeft"){
+    e.preventDefault();
+    markCard(session, { known: true });
+    nextFlashcard(session);
+    return true;
+  }
+  if(e.key === "ArrowRight"){
+    e.preventDefault();
+    markCard(session, { known: false });
+    nextFlashcard(session);
+    return true;
+  }
+
   if(e.key === "Enter" || e.key === " "){
-    // まず裏を表示、裏表示中は「知っていた」として進む
-    if(!session.showingBack){
-      session.showingBack = true;
-      renderFlashcard(session);
-    } else {
-      markCard(session, { known: true });
-      nextFlashcard(session);
-    }
+    // Enter/Space は表裏切替のみ
+    e.preventDefault();
+    session.showingBack = !session.showingBack;
+    renderFlashcard(session);
     return true;
   }
 

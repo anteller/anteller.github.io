@@ -48,6 +48,29 @@ function buildChoiceButton(text,i,onClick){
   return btn;
 }
 
+function restoreQuizActionButtonsToDefault(){
+  const flashcardActions = document.getElementById("flashcardActions");
+  if(flashcardActions) flashcardActions.classList.add("hidden");
+
+  const dontKnowWrap = document.querySelector("#quizScreen .dontknow-wrap");
+  if(dontKnowWrap) dontKnowWrap.classList.remove("hidden");
+
+  const inlineActions = els.backBtn?.closest(".inline-actions");
+  if(dontKnowWrap && els.iDontKnowBtn && els.iDontKnowBtn.parentElement !== dontKnowWrap){
+    dontKnowWrap.appendChild(els.iDontKnowBtn);
+  }
+  if(inlineActions && els.nextQuestionBtn && els.nextQuestionBtn.parentElement !== inlineActions){
+    inlineActions.appendChild(els.nextQuestionBtn);
+  }
+
+  // flashcards 用に付けた色クラスを戻す
+  if(els.iDontKnowBtn) els.iDontKnowBtn.classList.remove("danger");
+  if(els.nextQuestionBtn){
+    els.nextQuestionBtn.classList.remove("ok");
+    els.nextQuestionBtn.classList.add("secondary");
+  }
+}
+
 /* ===== 共通: 低正答率モード時の出題率調整UI ===== */
 function updatePriorityAdjustUI(){
   if(!els.priorityAdjustWrap) return;
@@ -67,6 +90,7 @@ function updatePriorityAdjustUI(){
  *  択一モード（従来）
  * =======================================================*/
 export function renderQuestion(){
+  restoreQuizActionButtonsToDefault();
   clearAutoTimer();
   state.answered=false;
   if(els.iDontKnowBtn) els.iDontKnowBtn.textContent = "わからない";
@@ -218,7 +242,10 @@ export function showResult(){
   };
 
   const buildPromptText = (q)=>{
-    if(isFlashcards && q && typeof q.front === "string") return `${q.front} → `;
+    if(isFlashcards && q && typeof q.front === "string"){
+      const prompt = (q.q && String(q.q).trim()!=="") ? q.q : q.front;
+      return `${prompt} → `;
+    }
     return q.q + " → 正解: ";
   };
 
@@ -305,6 +332,7 @@ function setMultiSelection(session, sel){
 }
 
 export function renderQuestionMultiple(session){
+  restoreQuizActionButtonsToDefault();
   clearAutoTimer();
   state.answered=false;
   if(els.iDontKnowBtn) els.iDontKnowBtn.textContent = "わからない";

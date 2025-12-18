@@ -58,17 +58,16 @@ function resetStatsForDuplicate(q){
 }
 
 function applyFlashcardsFormMode(){
-  // A: flashcardsでは questionInput を無効化し required を外す
+  // A: flashcardsでは questionInput を「問題文(任意)」として使う（front/back とは別）
   if(els.questionInput){
-    els.questionInput.disabled = true;
+    els.questionInput.disabled = false;
     els.questionInput.required = false;
-    els.questionInput.value = "";
-    els.questionInput.placeholder = "";
+    if(!els.questionInput.placeholder) els.questionInput.placeholder = "例: この単語の意味は？ / 空欄に入る語は？";
   }
   if(els.addChoiceBtn) els.addChoiceBtn.style.display = "none";
 
   const qLabel = document.getElementById("questionLabelText");
-  if(qLabel) qLabel.textContent = "（単語帳では未使用）:";
+  if(qLabel) qLabel.textContent = "問題文（任意）:";
   const legend = document.getElementById("choicesLegend");
   if(legend) legend.textContent = "カード内容";
   const help = document.getElementById("choicesHelpText");
@@ -864,10 +863,11 @@ function collectNewQuestion(){
   if(state.appMode === "flashcards"){
     const front = els.choicesEditArea?.querySelector(".fc-front")?.value.trim() || "";
     const back  = els.choicesEditArea?.querySelector(".fc-back")?.value.trim() || "";
+    const qText = els.questionInput?.value.trim() || "";
     const exp   = els.explanationInput?.value.trim() || "";
     const tags  = parseTags(els.tagsInput?.value);
-    if(!genre || !front || !back){ showToast("ジャンル/表/裏 未入力"); return null; }
-    return { mode:"flashcards", genre, front, back, exp, tags };
+    if(!genre){ showToast("ジャンル未入力"); return null; }
+    return { mode:"flashcards", genre, question:qText, front, back, exp, tags };
   }
 
   if(state.appMode === "multiple"){
@@ -984,6 +984,7 @@ export function populateEditForm(genre,index){
 
   if(state.appMode === "flashcards"){
     applyFlashcardsFormMode();
+    if(els.questionInput) els.questionInput.value = q.q || "";
   } else {
     applyNonFlashcardsFormMode();
     if(els.questionInput) els.questionInput.value = q.q || "";
@@ -1012,6 +1013,7 @@ export function handleAddQuestion(stay=false){
   if(state.appMode === "flashcards"){
     state.quizzes[data.genre].push({
       id:createId(),
+      q:data.question || "",
       front:data.front,
       back:data.back,
       exp:data.exp,
@@ -1054,7 +1056,7 @@ export function handleAddQuestion(stay=false){
       if(els.questionInput) els.questionInput.focus();
     }
     initChoiceEditors();
-    if(state.appMode !== "flashcards" && els.questionInput) els.questionInput.value="";
+    if(els.questionInput) els.questionInput.value="";
     if(els.explanationInput) els.explanationInput.value="";
     if(els.tagsInput) els.tagsInput.value="";
   } else {
@@ -1073,6 +1075,7 @@ export function handleSaveEdit(){
   if(state.appMode === "flashcards"){
     arr[state.editingIndex] = {
       ...old,
+      q: data.question || "",
       front: data.front,
       back: data.back,
       exp: data.exp,

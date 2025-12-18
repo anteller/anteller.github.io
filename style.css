@@ -70,6 +70,7 @@ body[data-theme="dark"] .btn.alt:hover { background:#3b82f6; }
 @media (prefers-color-scheme: dark){ body[data-theme="auto"] .btn.alt:hover { background:#3b82f6; } }
 .btn.danger { background:var(--c-warn); }
 .btn.warn { background:#f59e0b; }
+.btn.ok { background:var(--c-ok); }
 .btn.down{ background:#3b82f6; color:#fff; }
 .btn.down:hover{ background:#2563eb; }
 body[data-theme="dark"] .btn.down{ background:#2563eb; }
@@ -83,7 +84,37 @@ body[data-theme="dark"] .btn.down:hover{ background:#1d4ed8; }
 .btn.flat:hover { background:var(--c-accent); color:#fff; }
 .btn.danger:hover:not(:disabled) { background:#b91c1c; }
 .btn.warn:hover:not(:disabled) { background:#d97706; }
+.btn.ok:hover:not(:disabled) { background:var(--c-ok); filter: brightness(.95); }
 .btn:active:not(:disabled) { transform:translateY(1px); }
+
+.flashcard-actions {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+  justify-content:center;
+  margin:12px auto 0;
+  max-width:520px;
+}
+
+.flashcard-actions .btn {
+  width:100%;
+  justify-content:center;
+  padding:8px 12px;
+  font-size:14px;
+}
+
+/* 単語帳の色がクラス競合しても崩れないよう固定 */
+#flashcardActions #iDontKnowBtn {
+  background: var(--c-warn);
+  color: #fff;
+}
+#flashcardActions #iDontKnowBtn:hover:not(:disabled) { background:#b91c1c; }
+
+#flashcardActions #nextQuestionBtn {
+  background: var(--c-ok);
+  color: #fff;
+}
+#flashcardActions #nextQuestionBtn:hover:not(:disabled) { filter: brightness(.95); }
 
 .btn:focus-visible,
 .choice:focus-visible,
@@ -209,7 +240,7 @@ body[data-theme="dark"] .wrong-list li .exp { background:#334155; color:var(--c-
 
 form { display:flex; flex-direction:column; gap:16px; max-width:620px; margin:0 auto; width:100%; }
 label.form-label { display:flex; flex-direction:column; align-items:flex-start; font-size:14px; gap:6px; width:100%; }
-input[type=text], input[type=number], textarea, select {
+input[type=text], input[type=search], input[type=number], textarea, select {
     font-size:16px; padding:8px 10px; width:100%; border-radius:6px; border:1px solid var(--c-border);
     background:var(--c-panel); font-family:inherit; resize:vertical; color:var(--c-text);
 }
