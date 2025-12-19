@@ -263,6 +263,19 @@
     <div id="manageListWrap"></div>
   </div>
 
+  <!-- 確認ダイアログ（アプリ内） -->
+  <div id="confirmOverlay" class="confirm-overlay hidden" aria-hidden="true">
+    <div id="confirmDialog" class="confirm-dialog panel" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+      <button type="button" id="confirmCloseBtn" class="confirm-close" aria-label="閉じる">×</button>
+      <h3 id="confirmTitle" style="margin:0;">確認</h3>
+      <p id="confirmMessage" class="confirm-message"></p>
+      <div class="confirm-actions">
+        <button type="button" id="confirmYesBtn" class="btn">はい</button>
+        <button type="button" id="confirmNoBtn" class="btn secondary">いいえ</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ジャンル管理 -->
   <div id="genreManageScreen" class="panel hidden" data-screen="genreManageScreen">
     <h2>ジャンル管理</h2>

@@ -93,7 +93,16 @@ export const els = {
   bulkTagInput: $("#bulkTagInput"),
   genreFilterSelect: $("#genreFilterSelect"),
   manageBackBtn2: $("#manageBackBtn2"),
-  rightList: document.getElementById("rightList")
+  rightList: document.getElementById("rightList"),
+
+  // 確認ダイアログ（アプリ内）
+  confirmOverlay: $("#confirmOverlay"),
+  confirmDialog: $("#confirmDialog"),
+  confirmTitle: $("#confirmTitle"),
+  confirmMessage: $("#confirmMessage"),
+  confirmCloseBtn: $("#confirmCloseBtn"),
+  confirmYesBtn: $("#confirmYesBtn"),
+  confirmNoBtn: $("#confirmNoBtn")
 };
 
 export const screenMap = {

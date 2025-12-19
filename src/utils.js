@@ -100,3 +100,85 @@ export function keyListenerActiveQuiz(e, handlers){
     handlers.onDontKnow && handlers.onDontKnow();
   }
 }
+
+export function showConfirm({
+  title = "確認",
+  message = "",
+  yesText = "はい",
+  noText = "いいえ"
+} = {}){
+  // フォールバック（念のため）
+  if(!els.confirmOverlay || !els.confirmDialog || !els.confirmYesBtn || !els.confirmNoBtn){
+    return Promise.resolve(window.confirm(message));
+  }
+
+  return new Promise(resolve => {
+    const prevActive = document.activeElement;
+
+    if(els.confirmTitle) els.confirmTitle.textContent = title;
+    if(els.confirmMessage) els.confirmMessage.textContent = message;
+    els.confirmYesBtn.textContent = yesText;
+    els.confirmNoBtn.textContent = noText;
+
+    els.confirmOverlay.classList.remove("hidden");
+    els.confirmOverlay.setAttribute("aria-hidden", "false");
+
+    const cleanup = (result) => {
+      els.confirmOverlay.classList.add("hidden");
+      els.confirmOverlay.setAttribute("aria-hidden", "true");
+
+      els.confirmYesBtn.removeEventListener("click", onYes);
+      els.confirmNoBtn.removeEventListener("click", onNo);
+      els.confirmCloseBtn?.removeEventListener("click", onCancel);
+      els.confirmOverlay.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKeyDown, true);
+
+      try{
+        if(prevActive && typeof prevActive.focus === "function") prevActive.focus();
+      }catch{}
+      resolve(result);
+    };
+
+    const onYes = () => cleanup(true);
+    const onNo = () => cleanup(false);
+    const onCancel = () => cleanup(null);
+    const onBackdrop = (e) => {
+      // ダイアログ外クリックはキャンセル扱い
+      if(e.target === els.confirmOverlay) cleanup(null);
+    };
+    const onKeyDown = (e) => {
+      if(els.confirmOverlay.classList.contains("hidden")) return;
+      if(e.key === "Escape"){
+        e.preventDefault();
+        cleanup(null);
+        return;
+      }
+      if(e.key === "Tab"){
+        // 最小フォーカストラップ（ボタン2つのみ）
+        const focusables = [els.confirmCloseBtn, els.confirmYesBtn, els.confirmNoBtn].filter(Boolean);
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if(!first || !last) return;
+
+        if(e.shiftKey && document.activeElement === first){
+          e.preventDefault();
+          last.focus();
+        } else if(!e.shiftKey && document.activeElement === last){
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    els.confirmYesBtn.addEventListener("click", onYes);
+    els.confirmNoBtn.addEventListener("click", onNo);
+    els.confirmCloseBtn?.addEventListener("click", onCancel);
+    els.confirmOverlay.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKeyDown, true);
+
+    // 初期フォーカスは「はい」（キーボード操作向け）
+    setTimeout(()=>{
+      try{ els.confirmYesBtn.focus(); }catch{}
+    }, 0);
+  });
+}

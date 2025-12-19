@@ -15,7 +15,7 @@ import {
 import { els } from "../../../domRefs.js";
 import {
   showScreen, showToast, shuffle, clone, createId,
-  parseTags, buildGenreExportFileName, buildTagBadges
+  parseTags, buildGenreExportFileName, buildTagBadges, showConfirm
 } from "../../../utils.js";
 import {
   saveQuizzes, saveGenreOrder, saveSettings, migrateQuizzes
@@ -708,15 +708,19 @@ export function resetAllData(){
   return;
 }
 
-export function exportCurrentGenre(){
+export async function exportCurrentGenre(){
   const filterVal=els.genreFilterSelect ? els.genreFilterSelect.value : state.currentGenre;
   if(filterVal==="__ALL__"){ showToast("「(すべて)」表示中はエクスポート不可"); return; }
   const g=filterVal;
   if(!g || !state.quizzes[g]){ showToast("ジャンル不明"); return; }
 
-  const includeStats = confirm(
-    "エクスポート時に統計（正答率/既知率）を引き継ぎますか？\nOK=はい / キャンセル=いいえ（統計をリセットしてエクスポート）"
-  );
+  const includeStats = await showConfirm({
+    title: "エクスポート確認",
+    message: "エクスポート時に統計（正答率/既知率）を引き継ぎますか？",
+    yesText: "はい",
+    noText: "いいえ"
+  });
+  if(includeStats === null) return;
 
   const questions = clone(state.quizzes[g]);
   if(!includeStats){
